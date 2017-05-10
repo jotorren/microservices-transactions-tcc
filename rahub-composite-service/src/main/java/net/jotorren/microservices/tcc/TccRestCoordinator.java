@@ -2,10 +2,14 @@ package net.jotorren.microservices.tcc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
+
+import net.jotorren.microservices.tx.CompositeTransaction;
+import net.jotorren.microservices.tx.CompositeTransactionManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,14 +25,27 @@ public class TccRestCoordinator {
     @Qualifier("tccCoordinatorClient")
     private WebTarget tccCoordinatorClient;
     
-	public Transaction open(long timestamp, String... participantUris){
+    @Autowired
+    private CompositeTransactionManager txManager;
+    
+	public CompositeTransaction open(long timestamp, String... participantUris){
+		String txId = UUID.randomUUID().toString();
+		
+		int i = 0;
+		String participantUri;
+		String partialTxId;
 		List<ParticipantLink> participants = new ArrayList<ParticipantLink>();
 		for (String uri : participantUris) {
-			ParticipantLink participantLink = new ParticipantLink(uri, timestamp);
+			partialTxId = txId + "-" + String.format("%03d", i++);
+			txManager.open(partialTxId);
+			
+			participantUri = uri + (uri.endsWith("/")? "" : "/") + partialTxId;
+			ParticipantLink participantLink = new ParticipantLink(participantUri, timestamp);
 			participants.add(participantLink);
 		}
-
-		Transaction transaction = new Transaction();
+		
+		CompositeTransaction transaction = new CompositeTransaction();
+		transaction.setId(txId);
 		transaction.getParticipantLinks().addAll(participants);
 		return transaction;
 	}
