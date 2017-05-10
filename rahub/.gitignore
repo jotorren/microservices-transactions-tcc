@@ -1,0 +1,11 @@
+build
+dist
+tmp
+target
+
+# Ignore Test reporters
+#######################
+test
+coverage
+report
+doc
