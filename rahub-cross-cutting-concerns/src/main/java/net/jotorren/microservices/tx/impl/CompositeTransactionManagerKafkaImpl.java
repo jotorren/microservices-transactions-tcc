@@ -30,26 +30,27 @@ public class CompositeTransactionManagerKafkaImpl implements CompositeTransactio
 
 	private static final Logger LOG = LoggerFactory.getLogger(CompositeTransactionManager.class);
 
-	@Autowired
-	private KafkaTemplate<Integer, String> kafkaTemplate;
-
-	@Autowired
-	@Qualifier("kafkaConsumerConfiguration")
-	private Map<String, Object> configuration;
-
-	@Value("${kafka.consumer.poll.timeout}")
-	private int kafkaConsumerPollTimeout;
-	
-	@Value("${zookeeper.partitions}")
+	@Value("${zookeeper.partitions:0}")
 	private int zooPartitions;
 	
-	@Value("${zookeeper.replication}")
+	@Value("${zookeeper.replication:0}")
 	private int zooReplication;
 	
-	@Autowired
+	@Value("${kafka.consumer.poll.timeout:0}")
+	private long kafkaConsumerPollTimeout;
+	
+	
+	@Autowired(required = false)
 	private ZkUtils zkUtils;
 	
-	@Autowired
+	@Autowired(required = false)
+	private KafkaTemplate<Integer, String> kafkaTemplate;
+
+	@Autowired(required = false)
+	@Qualifier("kafkaConsumerConfiguration")
+	private Map<String, Object> configuration;
+	
+	@Autowired(required = false)
 	private Serializer<EntityCommand<?>> serializer;
 	
 	@Override
