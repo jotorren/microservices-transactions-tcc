@@ -25,9 +25,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.serializer.support.SerializationFailedException;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
 
-@Service
 public class CompositeTransactionManagerKafkaImpl implements CompositeTransactionManager {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CompositeTransactionManager.class);
