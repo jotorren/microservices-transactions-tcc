@@ -2,9 +2,8 @@ package net.jotorren.microservices.context;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
 
-@Component
+// To be defined as spring component inside target project
 public class SpringContextProvider implements ApplicationContextAware {
 	private static ApplicationContext ctx = null;
 
