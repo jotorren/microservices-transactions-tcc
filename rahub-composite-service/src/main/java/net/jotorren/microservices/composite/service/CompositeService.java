@@ -44,13 +44,16 @@ public class CompositeService {
 
 		Response commitResponse;
 		try{
-			String contentURI = transaction.getParticipantLinks().get(0).getUri(); // callContentService(contentServiceBaseUrl+"/"+txId, data);
+			String contentURI = transaction.getParticipantLinks().get(0).getUri(); 
+			// callContentService(contentServiceBaseUrl+"/"+txId, data);
 			LOG.info("Step 1: content created [{}]", contentURI);
 			
-			String forumURI = transaction.getParticipantLinks().get(1).getUri(); // callForumService(forumServiceBaseUrl+"/"+txId, data, contentURI);
+			String forumURI = transaction.getParticipantLinks().get(1).getUri(); 
+			// callForumService(forumServiceBaseUrl+"/"+txId, data, contentURI);
 			LOG.info("Step 2: forum discussion created [{}]", forumURI);
 			
-			newObjectsUris = new AbstractMap.SimpleEntry<String, List<String>>(transaction.getId(), Arrays.asList(contentURI, forumURI));
+			newObjectsUris = new AbstractMap.SimpleEntry<String, 
+					List<String>>(transaction.getId(), Arrays.asList(contentURI, forumURI));
 			
 			commitResponse = tccRestCoordinator.commit(transaction);
 
