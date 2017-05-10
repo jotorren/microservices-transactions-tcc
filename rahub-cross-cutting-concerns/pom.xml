@@ -27,7 +27,12 @@
 		    <groupId>org.hibernate.javax.persistence</groupId>
 		    <artifactId>hibernate-jpa-2.1-api</artifactId>
 		</dependency>
-					
+
+		<dependency>
+		    <groupId>com.atomikos</groupId>
+		    <artifactId>transactions-tcc-rest-api</artifactId>
+		</dependency>	
+							
 		<dependency>
 		    <groupId>com.101tec</groupId>
 		    <artifactId>zkclient</artifactId>
@@ -35,6 +40,6 @@
 		<dependency>
 		    <groupId>org.apache.kafka</groupId>
 		    <artifactId>kafka_2.11</artifactId>
-		</dependency>	
+		</dependency>
 	</dependencies>
 </project>
