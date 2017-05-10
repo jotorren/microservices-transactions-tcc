@@ -28,7 +28,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CompositeTransactionKafkaManagerImpl implements CompositeTransactionManager {
+public class CompositeTransactionManagerKafkaImpl implements CompositeTransactionManager {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CompositeTransactionManager.class);
 

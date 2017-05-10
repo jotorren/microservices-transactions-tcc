@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CompositeTransactionMemoryManagerImpl implements CompositeTransactionManager {
+public class CompositeTransactionManagerMemoryImpl implements CompositeTransactionManager {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CompositeTransactionManager.class);
 
