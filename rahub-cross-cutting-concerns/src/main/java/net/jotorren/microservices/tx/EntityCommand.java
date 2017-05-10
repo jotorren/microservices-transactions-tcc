@@ -2,23 +2,23 @@ package net.jotorren.microservices.tx;
 
 import java.io.Serializable;
 
-public class EntityCommand implements Serializable{
+public class EntityCommand<T> implements Serializable{
 	private static final long serialVersionUID = -3927305961526601453L;
 
 	public enum Action {
 		INSERT, UPDATE, DELETE, QUERY
 	}
 
-	private Object entity;
+	private T entity;
 	private Action action;
 	private String transactionId;
 	private long timestamp;
 	
-	public Object getEntity() {
+	public T getEntity() {
 		return entity;
 	}
 
-	public void setEntity(Object entity) {
+	public void setEntity(T entity) {
 		this.entity = entity;
 	}
 

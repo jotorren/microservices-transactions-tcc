@@ -16,7 +16,7 @@ public class ChangeStateJpaListener {
 
 	private void enlist(Object entity, EntityCommand.Action action, String txId){
 		
-		EntityCommand command = new EntityCommand();
+		EntityCommand<Object> command = new EntityCommand<Object>();
 		command.setEntity(entity);
 		command.setAction(action);
 		command.setTransactionId(txId);

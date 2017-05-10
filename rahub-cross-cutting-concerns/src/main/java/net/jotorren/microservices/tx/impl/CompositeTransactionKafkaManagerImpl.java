@@ -52,7 +52,7 @@ public class CompositeTransactionKafkaManagerImpl implements CompositeTransactio
 	private ZkUtils zkUtils;
 	
 	@Autowired
-	private Serializer<EntityCommand> serializer;
+	private Serializer<EntityCommand<?>> serializer;
 	
 	@Override
 	public void open(String txId) {
@@ -63,14 +63,14 @@ public class CompositeTransactionKafkaManagerImpl implements CompositeTransactio
 	}
 
 	@Override
-	public void enlist(String txId, EntityCommand command) {
+	public void enlist(String txId, EntityCommand<?> command) {
 		kafkaTemplate.send(txId, serializer.writeToString(command));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<EntityCommand> fetch(String txId) {
-		List<EntityCommand> transactionOperations = new ArrayList<EntityCommand>();
+	public List<EntityCommand<?>> fetch(String txId) {
+		List<EntityCommand<?>> transactionOperations = new ArrayList<EntityCommand<?>>();
 
 		Map<String, Object> consumerConfigs = (Map<String, Object>)configuration.get("kafkaConsumerConfiguration");
 		consumerConfigs.put(ConsumerConfig.GROUP_ID_CONFIG, UUID.randomUUID().toString());

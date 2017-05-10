@@ -17,29 +17,29 @@ public class CompositeTransactionMemoryManagerImpl implements CompositeTransacti
 
 	private static final Logger LOG = LoggerFactory.getLogger(CompositeTransactionManager.class);
 
-	private Map<String, List<EntityCommand>> transactions = new ConcurrentHashMap<String, List<EntityCommand>>();
+	private Map<String, List<EntityCommand<?>>> transactions = new ConcurrentHashMap<String, List<EntityCommand<?>>>();
 
 	@Override
 	public void open(String txId) {
 		if (transactions.containsKey(txId)) {
 			throw new IllegalArgumentException("The composite transaction ["+ txId + "] already exists");
 		}
-		transactions.put(txId, new ArrayList<EntityCommand>());
+		transactions.put(txId, new ArrayList<EntityCommand<?>>());
 	}
 
 	@Override
-	public void enlist(String txId, EntityCommand ec) {
+	public void enlist(String txId, EntityCommand<?> ec) {
 		if (!transactions.containsKey(txId)) {
 			throw new IllegalArgumentException("The composite transaction ["+ txId + "] does not exist");
 		}
 
-		List<EntityCommand> transactionOperations = transactions.get(txId);
+		List<EntityCommand<?>> transactionOperations = transactions.get(txId);
 		transactionOperations.add(ec);
 	}
 
 	@Override
-	public List<EntityCommand> fetch(String txId) {
-		List<EntityCommand> transactionOperations = transactions.get(txId);
+	public List<EntityCommand<?>> fetch(String txId) {
+		List<EntityCommand<?>> transactionOperations = transactions.get(txId);
 		if (null == transactionOperations) {
 			throw new IllegalArgumentException("The composite transaction ["+ txId + "] does not exist");
 		}
@@ -49,7 +49,7 @@ public class CompositeTransactionMemoryManagerImpl implements CompositeTransacti
 	
 	@Override
 	public void close(String txId) {
-		List<EntityCommand> transactionOperations = transactions.remove(txId);
+		List<EntityCommand<?>> transactionOperations = transactions.remove(txId);
 		if (null == transactionOperations) {
 			LOG.warn("The composite transaction [{}] does not exist", txId);
 		}

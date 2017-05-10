@@ -5,17 +5,17 @@ import org.springframework.core.serializer.support.SerializationFailedException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public abstract class AbstractEntityCommandJsonSerializer implements Serializer<EntityCommand> {
+public abstract class AbstractEntityCommandJsonSerializer implements Serializer<EntityCommand<?>> {
 
 	protected ObjectMapper jacksonMapper = new ObjectMapper();
 	
 	@Override
-	public byte[] write(EntityCommand object) throws SerializationFailedException {
+	public byte[] write(EntityCommand<?> object) throws SerializationFailedException {
 		return writeToString(object).getBytes();
 	}
 
 	@Override
-	public String writeToString(EntityCommand object) throws SerializationFailedException {
+	public String writeToString(EntityCommand<?> object) throws SerializationFailedException {
 		try {
 			return jacksonMapper.writeValueAsString(object);
 		} catch (JsonProcessingException e) {
@@ -24,11 +24,11 @@ public abstract class AbstractEntityCommandJsonSerializer implements Serializer<
 	}
 
 	@Override
-	public EntityCommand read(byte[] bytes) throws SerializationFailedException {
+	public EntityCommand<?> read(byte[] bytes) throws SerializationFailedException {
 		return readFromString(new String(bytes));
 	}
 
 	@Override
-	public abstract EntityCommand readFromString(String chars) throws SerializationFailedException;
+	public abstract EntityCommand<?> readFromString(String chars) throws SerializationFailedException;
 
 }
