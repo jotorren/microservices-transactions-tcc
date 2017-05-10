@@ -7,7 +7,6 @@
 		<groupId>net.jotorren.microservices</groupId>
 		<artifactId>rahub</artifactId>
 		<version>1.0.0</version>
-		<relativePath>../rahub</relativePath>
 	</parent>
 		
 	<artifactId>rahub-cross-cutting-concerns</artifactId>

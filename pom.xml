@@ -19,7 +19,7 @@
 	</parent>
 	  
 	<modules>
-		<module>../rahub-cross-cutting-concerns</module>
+		<module>rahub-cross-cutting-concerns</module>
 	</modules>
 
 	<properties>
