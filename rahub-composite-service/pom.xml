@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>net.jotorren.microservices</groupId>
+		<artifactId>rahub</artifactId>
+		<version>1.0.0</version>
+	</parent>
+		
+	<artifactId>rahub-composite-service</artifactId>
+	<name>rahub-composite-service</name>
+	<description>Spring Boot raHub Composite Service</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-spring-boot-starter-jaxrs</artifactId>
+			<version>3.1.11</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>net.jotorren.microservices</groupId>
+			<artifactId>rahub-cross-cutting-concerns</artifactId>
+		</dependency>
+		
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-json-provider</artifactId>
+        </dependency>		
+		<dependency>
+		    <groupId>com.atomikos</groupId>
+		    <artifactId>transactions</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>com.atomikos</groupId>
+		    <artifactId>transactions-api</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>com.atomikos</groupId>
+		    <artifactId>transactions-tcc-rest</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>com.atomikos</groupId>
+		    <artifactId>transactions-tcc-rest-api</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>com.atomikos</groupId>
+		    <artifactId>atomikos-util</artifactId>
+		</dependency>
+		
+		<dependency>
+		    <groupId>com.101tec</groupId>
+		    <artifactId>zkclient</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.kafka</groupId>
+		    <artifactId>kafka_2.11</artifactId>
+		</dependency>		
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.restdocs</groupId>
+			<artifactId>spring-restdocs-mockmvc</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

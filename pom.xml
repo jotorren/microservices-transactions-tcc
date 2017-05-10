@@ -20,6 +20,7 @@
 	  
 	<modules>
 		<module>rahub-cross-cutting-concerns</module>
+		<module>rahub-composite-service</module>
 	</modules>
 
 	<properties>
@@ -28,6 +29,7 @@
 		<java.version>1.8</java.version>
 		
 		<net.jotorren.microservices.version>1.0.0</net.jotorren.microservices.version>
+		<org.hibernate.javax.persistence.version>1.0.0.Final</org.hibernate.javax.persistence.version>
 		<com.101tec.version>0.10</com.101tec.version>
 		<org.apache.kafka.version>0.10.2.1</org.apache.kafka.version>
 		<com.atomikos.version>4.0.4</com.atomikos.version>
@@ -39,6 +41,12 @@
 				<groupId>net.jotorren.microservices</groupId>
 				<artifactId>rahub-cross-cutting-concerns</artifactId>
 				<version>${net.jotorren.microservices.version}</version>
+			</dependency>
+
+			<dependency>
+			    <groupId>org.hibernate.javax.persistence</groupId>
+			    <artifactId>hibernate-jpa-2.1-api</artifactId>
+			    <version>${org.hibernate.javax.persistence.version}</version>
 			</dependency>
 		
 			<dependency>
