@@ -1,0 +1,17 @@
+build
+dist
+tmp
+target
+
+.settings
+.classpath
+.project
+
+.vscode
+
+# Ignore Test reporters
+#######################
+test
+coverage
+report
+doc
