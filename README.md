@@ -1,4 +1,4 @@
-# Microservices and distributed transactions (I)
+# Microservices and *not distributed* transactions (I)
 
 ## Initial Scenario
 
