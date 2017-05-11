@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.UUID;
 
 import net.jotorren.microservices.content.dao.ContentDao;
-import net.jotorren.microservices.content.dao.TransactionAwareContentDao;
+import net.jotorren.microservices.content.dao.ContentTransactionAwareDao;
 import net.jotorren.microservices.content.domain.SourceCodeItem;
 import net.jotorren.microservices.context.ThreadLocalContext;
-import net.jotorren.microservices.tx.CompositeTransactionManager;
+import net.jotorren.microservices.tx.CompositeTransactionDao;
+import net.jotorren.microservices.tx.CompositeTransactionParticipantService;
 import net.jotorren.microservices.tx.EntityCommand;
 
 import org.slf4j.Logger;
@@ -15,10 +16,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ContentService {
+public class ContentService extends CompositeTransactionParticipantService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ContentService.class);
 	
@@ -27,12 +27,8 @@ public class ContentService {
 	
 	@Autowired
 	private ContentDao dao;
-
-	@Autowired
-	private CompositeTransactionManager txManager;
 	
-	
-	public String save(SourceCodeItem content) {
+	public String addNewContent(SourceCodeItem content) {
 		String uuid = UUID.randomUUID().toString();
 		content.setItemId(uuid);
 		
@@ -40,62 +36,41 @@ public class ContentService {
 		return saved.getItemId();
 	}
 	
-	public SourceCodeItem get(String pk) {
+	public SourceCodeItem getContent(String pk) {
 		return dao.findOne(pk);
 	}
 
 	// Composite Transaction methods
+
+	@Override
+	public CompositeTransactionDao getCompositeTransactionDao() {
+		return context.getBean(ContentTransactionAwareDao.class);
+	}
 	
-	public String save(String txId, SourceCodeItem content) {
-		ThreadLocalContext.put("current.opened.tx", txId);
+	public String addNewContent(String txId, SourceCodeItem content) {
+		ThreadLocalContext.put(CURRENT_TRANSACTION_KEY, txId);
 		
 		String uuid = UUID.randomUUID().toString();
 		content.setItemId(uuid);
 		
 		LOG.info("Creating transaction [{}]", txId);
-		TransactionAwareContentDao unsynchronizedDao = context.getBean(TransactionAwareContentDao.class);
-		SourceCodeItem saved = unsynchronizedDao.saveOrUpdate(content);
+		SourceCodeItem saved = getCompositeTransactionDao().saveOrUpdate(content);
 		
 		return saved.getItemId();
 	}
 	
-	public SourceCodeItem get(String txId, String pk) {
-		ThreadLocalContext.remove("current.opened.tx");
+	public SourceCodeItem getContent(String txId, String pk) {
+		ThreadLocalContext.remove(CURRENT_TRANSACTION_KEY);
 		
 		LOG.warn("Looking for transaction [{}]", txId);
-		List<EntityCommand<?>> transactionOperations = txManager.fetch(txId);
+		List<EntityCommand<?>> transactionOperations = getCompositeTransactionManager().fetch(txId);
 		if (null == transactionOperations){
 			LOG.error("Transaction [{}] does not exist", txId);
 			return null;
 		}
-		TransactionAwareContentDao unsynchronizedDao = context.getBean(TransactionAwareContentDao.class);
+		ContentTransactionAwareDao unsynchronizedDao = (ContentTransactionAwareDao)getCompositeTransactionDao();
 		unsynchronizedDao.apply(transactionOperations);
 		
 		return unsynchronizedDao.findOne(pk);
-	}
-
-	// TCC methods
-	
-	@Transactional(readOnly=false)
-	public void commit(String txId) {
-		ThreadLocalContext.remove("current.opened.tx");
-		
-		LOG.warn("Looking for transaction [{}]", txId);
-		List<EntityCommand<?>> transactionOperations = txManager.fetch(txId);
-		if (null == transactionOperations){
-			LOG.warn("Transaction [{}] does not exist. Ignoring commit call", txId);
-			return;
-		}
-		TransactionAwareContentDao unsynchronizedDao = context.getBean(TransactionAwareContentDao.class);
-		unsynchronizedDao.apply(transactionOperations);
-		
-		LOG.warn("Committing transaction [{}]", txId);
-		unsynchronizedDao.commit();
-	}
-	
-	public void rollback(String txId) {
-		ThreadLocalContext.remove("current.opened.tx");
-		
-		LOG.warn("Rolling back transaction [{}]", txId);
 	}
 }

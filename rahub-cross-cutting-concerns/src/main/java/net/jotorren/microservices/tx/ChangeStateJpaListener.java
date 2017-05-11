@@ -28,7 +28,7 @@ public class ChangeStateJpaListener {
 	
 	@PrePersist
 	void onPrePersist(Object o) {
-		String txId = (String)ThreadLocalContext.get("current.opened.tx");
+		String txId = (String)ThreadLocalContext.get(CompositeTransactionParticipantService.CURRENT_TRANSACTION_KEY);
 		if (null == txId){
 			LOG.info("onPrePersist outside any transaction");
 		} else {
@@ -39,7 +39,7 @@ public class ChangeStateJpaListener {
 
 	@PreUpdate
 	void onPreUpdate(Object o) {
-		String txId = (String)ThreadLocalContext.get("current.opened.tx");
+		String txId = (String)ThreadLocalContext.get(CompositeTransactionParticipantService.CURRENT_TRANSACTION_KEY);
 		if (null == txId){
 			LOG.info("onPreUpdate outside any transaction");
 		} else {
@@ -50,7 +50,7 @@ public class ChangeStateJpaListener {
 
 	@PreRemove
 	void onPreRemove(Object o) {
-		String txId = (String)ThreadLocalContext.get("current.opened.tx");
+		String txId = (String)ThreadLocalContext.get(CompositeTransactionParticipantService.CURRENT_TRANSACTION_KEY);
 		if (null == txId){
 			LOG.info("onPreRemove outside any transaction");
 		} else {	
