@@ -11,8 +11,10 @@ import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.feature.LoggingFeature;
 import org.apache.cxf.jaxrs.JAXRSServerFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 import com.atomikos.icatch.tcc.rest.CoordinatorImp;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
@@ -46,4 +48,9 @@ public class WebServicesConfiguration {
         
         return endpoint.create();
     }
+    
+	@Bean
+	public RestTemplate restTemplate(RestTemplateBuilder builder) {
+		return builder.build();
+	}
 }
