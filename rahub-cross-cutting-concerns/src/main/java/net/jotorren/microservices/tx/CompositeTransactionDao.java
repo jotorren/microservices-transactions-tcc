@@ -10,8 +10,12 @@ import javax.persistence.SynchronizationType;
 public class CompositeTransactionDao {
 
 	@PersistenceContext(type = PersistenceContextType.EXTENDED, synchronization = SynchronizationType.UNSYNCHRONIZED)
-	protected EntityManager em;
+	private EntityManager em;
 
+	public EntityManager getEntityManager() {
+		return em;
+	}
+	
 	public void save(Object entity) {
 		em.persist(entity);
 	}
