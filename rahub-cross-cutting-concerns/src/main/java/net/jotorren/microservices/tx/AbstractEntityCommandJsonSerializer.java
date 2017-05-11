@@ -7,7 +7,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class AbstractEntityCommandJsonSerializer<T> implements Serializer<EntityCommand<T>> {
 
-	protected ObjectMapper jacksonMapper = new ObjectMapper();
+	private ObjectMapper jacksonMapper = new ObjectMapper();
+	
+	public ObjectMapper getJacksonMapper(){
+		return jacksonMapper;
+	}
 	
 	@Override
 	public byte[] write(EntityCommand<T> object) throws SerializationFailedException {

@@ -21,11 +21,11 @@ public class SourceCodeItemSerializer extends AbstractEntityCommandJsonSerialize
 		try {
 			EntityCommand<SourceCodeItem> command = new EntityCommand<SourceCodeItem>();
 			
-			JsonNode node = jacksonMapper.readValue(chars, JsonNode.class);
+			JsonNode node = getJacksonMapper().readValue(chars, JsonNode.class);
 		    command.setAction(EntityCommand.Action.valueOf(node.get("action").asText()));
 		    command.setTransactionId(node.get("transactionId").asText());
 		    command.setTimestamp(node.get("timestamp").asLong());			    
-		    command.setEntity(jacksonMapper.readValue(node.get("entity").toString(), SourceCodeItem.class));
+		    command.setEntity(getJacksonMapper().readValue(node.get("entity").toString(), SourceCodeItem.class));
 		    
 		    return command;
 		} catch (JsonParseException e) {
