@@ -8,9 +8,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @Scope("prototype")
-public class TransactionAwareContentDao extends CompositeTransactionDao{
+public class ContentTransactionAwareDao extends CompositeTransactionDao{
 
     public SourceCodeItem findOne(String pk){    	    	  
-    	return em.find(SourceCodeItem.class, pk);
+    	return getEntityManager().find(SourceCodeItem.class, pk);
     }
 }
