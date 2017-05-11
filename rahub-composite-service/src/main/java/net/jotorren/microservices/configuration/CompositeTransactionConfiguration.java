@@ -22,7 +22,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 @Configuration
 public class CompositeTransactionConfiguration {
 
-	@Value("${tcc.rest.coordinator.base.url}")
+	@Value("${tcc.service.base.url}")
 	private String tccCoordinatorBaseUrl;
 
 	
