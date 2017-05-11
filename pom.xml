@@ -22,6 +22,7 @@
 		<module>rahub-cross-cutting-concerns</module>
 		<module>rahub-composite-service</module>
 		<module>rahub-source-code-service</module>
+		<module>rahub-forum-service</module>
 	</modules>
 
 	<properties>
