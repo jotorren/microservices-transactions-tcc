@@ -3,6 +3,10 @@ dist
 tmp
 target
 
+.settings
+.classpath
+.project
+
 # Ignore Test reporters
 #######################
 test
