@@ -8,10 +8,4 @@ A very simple contract of such service could be:
 
 ![api](https://cloud.githubusercontent.com/assets/22961359/25993196/88ffaac6-3709-11e7-8c3a-d68d25f8804b.png)
 
-
-
-```
-<img src="https://cloud.githubusercontent.com/assets/22961359/25993196/88ffaac6-3709-11e7-8c3a-d68d25f8804b.png" width="48">
-```
-
  
