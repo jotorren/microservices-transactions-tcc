@@ -24,22 +24,33 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 @Configuration
 public class WebServicesConfiguration {
+	
+	@Value("${swagger.title}")
+	private String title;
 
-	@Value("${cxf.swagger.resourcePackage}")
+	@Value("${swagger.description}")
+	private String description;
+
+	@Value("${swagger.version}")
+	private String version;
+
+	@Value("${swagger.contact}")
+	private String contact;
+
+	@Value("${swagger.schemes}")
+	private String schemes;
+
+	@Value("${swagger.basePath}")
+	private String basePath;
+
+	@Value("${swagger.resourcePackage}")
 	private String resourcePackage;
 
-	@Value("${cxf.swagger.contact}")
-	private String contact;
+	@Value("${swagger.prettyPrint}")
+	private boolean prettyPrint;
 	
-	@Value("${cxf.swagger.description}")
-	private String description;
-	
-	@Value("${cxf.swagger.title}")
-	private String title;
-	
-	@Value("${cxf.swagger.version}")
-	private String version;
-	
+	@Value("${swagger.scan}")
+	private boolean scan;
 	
     @Autowired
     private Bus bus;
@@ -62,11 +73,15 @@ public class WebServicesConfiguration {
         endpoint.setExtensionMappings(mappings);
         
         Swagger2Feature swagger2Feature = new Swagger2Feature();
-        swagger2Feature.setResourcePackage(resourcePackage);
-        swagger2Feature.setContact(contact);
-        swagger2Feature.setDescription(description);
         swagger2Feature.setTitle(title);
+        swagger2Feature.setDescription(description);
         swagger2Feature.setVersion(version);
+        swagger2Feature.setContact(contact);
+        swagger2Feature.setSchemes(schemes.split(","));
+        swagger2Feature.setBasePath(basePath);
+        swagger2Feature.setResourcePackage(resourcePackage);
+        swagger2Feature.setPrettyPrint(prettyPrint);
+        swagger2Feature.setScan(scan);
         
         endpoint.setFeatures(Arrays.asList(new LoggingFeature(), swagger2Feature));
         endpoint.setServiceBeans(Arrays.asList(tccCoordinatorService, compositeController));

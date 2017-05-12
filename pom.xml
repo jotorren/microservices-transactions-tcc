@@ -88,11 +88,16 @@
 			    <version>${com.atomikos.version}</version>
 			</dependency>
 			
-			<!-- CXF Swagger2Feature -->
+			<!-- Swagger2 -->
 			<dependency>
 				<groupId>org.apache.cxf</groupId>
 				<artifactId>cxf-rt-rs-service-description-swagger</artifactId>
 				<version>3.1.11</version>
+			</dependency>
+			<dependency>
+				<groupId>io.swagger</groupId>
+				<artifactId>swagger-jersey2-jaxrs</artifactId>
+				<version>1.5.13</version>
 			</dependency>
 	        <dependency>
 	            <groupId>org.webjars</groupId>

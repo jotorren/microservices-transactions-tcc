@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.ResponseHeader;
 
 import java.net.URI;
 import java.util.List;
@@ -26,15 +27,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 @Controller
-@Path("/api")
-@Api(value = "/api")
+@Path("/")
+@Api(value = "API Services")
 public class CompositeController {
 
 	@Autowired
 	private CompositeService service;
 	
 	@POST
-	@Path("/files")
+	@Path("files")
 	@Produces ( "application/json" )
     @ApiOperation(
     		code = 201,
@@ -43,7 +44,10 @@ public class CompositeController {
             		+ "The newly created resource(s) can be referenced by the URI(s) returned in the entity of the response, with the URI for the "
             		+ "distributed transaction given by the Location header field",
             response = String.class,
-            responseContainer = "List"
+            responseContainer = "List",
+            responseHeaders = {
+    			 @ResponseHeader(name = "Location", description = "The distributed transaction URI", response = String.class)
+    		}
         )
 	@ApiResponses(value = {
 			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
