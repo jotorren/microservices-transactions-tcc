@@ -26,7 +26,7 @@ Regarding the sequence of actions:
 5. A domain service performs persistence operations through a JPA unsynchronized persistence context and publishes appropriate commands to the topic identified by the given *partial transaction id*
 6. If all domain services calls succeed, the composite service signals the coordinator to confirm the changes
    - The coordinator calls the commit operation on each domain service passing the correct *partial transaction id*
-   - Each domain service reads all commands from the corresponding topic, executes them through a JPA unsynchronized persistence context and finally applies the derived changes to the underlying repository.
+   - Each domain service reads all commands from the given topic, executes them through a JPA unsynchronized persistence context and finally applies the derived changes to the underlying repository.
    - If all commit calls succeed the business operation ends successfully, otherwise a rollback call is propagated
 7. If a domain service call fails, the composite service signals the coordinator to cancel the changes
    - The coordinator calls the rollback operation on each domain service passing the correct *partial transaction id*
