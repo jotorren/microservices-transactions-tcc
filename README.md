@@ -11,7 +11,7 @@ Let's describe that approach. We will start by introducing all the actors:
 - **Command**. Data describing a persistence operation performed by a domain service: "*an operation on a given entity within certain context*"
 - **Composite transaction**. Set of commands that must be grouped and carried out together.
 - **Coordinator**. Service to manage composite transactions lifecycle, deciding whether or not their changes (commands) must be applied to the corresponding underlying repositories.
-- **TCC Service**. TCC protocol implementation. Handles all TCC remote calls verifying no transaction timeout has been exceeded.
+- **TCC Service**. *Try*-*Cancel*/*Confirm* protocol implementation. Handles all TCC remote calls verifying no transaction timeout has been exceeded.
 - **Distributed, replicated event log**. Distributed store of composite transactions accessible by any service instance (domain, composite or coordinator)
 
 I would like to point out that Domain, Composite, Coordinator and TCC services have no 2PC/XA support and they can be dynamically allocated/destroyed.
