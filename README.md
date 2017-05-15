@@ -20,7 +20,7 @@ I would like to point out that Domain, Composite and Coordinator services have n
 And now the sequence of actions:
 
 1. A client makes a remote call to a composite service
-2. The composite service knows which domain services needs to invoke in order to resolve the business operation and passes that information to the coordinator
+2. The composite service knows which domain services needs to invoke and passes that information to the coordinator
 3. The coordinator creates a composite transaction or, in other words, a persistent topic for each domain service involved in the operation. Every topic will be uniquely identified by a string that can be interpreted as a *partial transaction id* (partial because a topic will store only commands for instances of a single domain service)
 4. The composite service calls each domain service using its respective *partial transaction id*
 5. A domain service performs persistence operations through a JPA unsynchronized persistence context and publishes appropriate commands to the topic identified by the given *partial transaction id*
