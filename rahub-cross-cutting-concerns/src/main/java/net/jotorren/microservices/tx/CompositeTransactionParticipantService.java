@@ -25,14 +25,14 @@ public abstract class CompositeTransactionParticipantService {
 	public void cancel(String txId) {
 		ThreadLocalContext.remove(CURRENT_TRANSACTION_KEY);
 		
-		LOG.warn("Rolling back transaction [{}]", txId);
+		LOG.info("Rolling back transaction [{}]", txId);
 	}
 	
 	@Transactional(readOnly=false)
 	public void confirm(String txId) {
 		ThreadLocalContext.remove(CURRENT_TRANSACTION_KEY);
 		
-		LOG.warn("Looking for transaction [{}]", txId);
+		LOG.info("Looking for transaction [{}]", txId);
 		List<EntityCommand<?>> transactionOperations = txManager.fetch(txId);
 		if (null == transactionOperations){
 			LOG.warn("Transaction [{}] does not exist. Ignoring commit call", txId);
@@ -41,7 +41,7 @@ public abstract class CompositeTransactionParticipantService {
 		CompositeTransactionDao unsynchronizedDao = getCompositeTransactionDao();
 		unsynchronizedDao.apply(transactionOperations);
 		
-		LOG.warn("Committing transaction [{}]", txId);
+		LOG.info("Committing transaction [{}]", txId);
 		unsynchronizedDao.commit();
 	}
 		
