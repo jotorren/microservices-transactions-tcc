@@ -1,11 +1,13 @@
-# Microservices and *not distributed* transactions (I)
+# Microservices and data consistency (I)
 
-## Initial Scenario
+As you can read in [Christian Posta's excellent article](http://blog.christianposta.com/microservices/the-hardest-part-about-microservices-data/), when designing a microservices-based solution, to solve consistency between bounded contexts our first choice will be to communicate boundaries with immutable point in time events by means of a messaging queue/listener, a dedicated event store/publish-subscribe topic or a replicated log/event processor.
 
-Suppose a fictitious company has decided to set up a new corporate repository where users can publish pieces of "interesting" code by means of the RESTful API included in the product.
+¿But how to deal with situations where, inevitably, we must update data from different contexts in a single transaction either across a single database or multiple databases? A combination of JPA 2.1 unsynchronized persistence contexts, JPA Entity listeners, Kafka and [Atomikos TCC](https://www.atomikos.com/Blog/TransactionManagementAPIForRESTTCC) could fit like a glove ;-)
 
-A very simple contract of such service could be:
+Let's describe that approach:
 
-![api](https://cloud.githubusercontent.com/assets/22961359/25993196/88ffaac6-3709-11e7-8c3a-d68d25f8804b.png)
+
+
+
 
  
