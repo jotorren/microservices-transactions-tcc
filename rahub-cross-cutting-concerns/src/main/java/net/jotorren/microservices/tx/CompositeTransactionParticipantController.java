@@ -1,5 +1,8 @@
 package net.jotorren.microservices.tx;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PUT;
@@ -16,7 +19,14 @@ public abstract class CompositeTransactionParticipantController {
 	@DELETE
 	@Path("/tcc/{txid}")
 	@Consumes("application/tcc")
-	public void cancel(@PathParam("txid") String txid){
+    @ApiOperation(
+            value = "Rollback a given composite transaction",
+            notes = "See https://www.atomikos.com/Blog/TransactionManagementAPIForRESTTCC",
+            consumes = "application/tcc"
+        )
+	public void cancel(
+			@ApiParam(value = "Id of the composite transaction to rollback", required = true) @PathParam("txid") String txid
+			){
 		LOG.info("Trying to rollback transaction [{}]", txid);
 		
 		getCompositeTransactionParticipantService().cancel(txid);
@@ -27,7 +37,14 @@ public abstract class CompositeTransactionParticipantController {
 	@PUT
 	@Path("/tcc/{txid}")
 	@Consumes("application/tcc")
-	public void confirm(@PathParam("txid") String txid){
+    @ApiOperation(
+            value = "Commit a given composite transaction",
+            notes = "See https://www.atomikos.com/Blog/TransactionManagementAPIForRESTTCC",
+            consumes = "application/tcc"
+        )
+	public void confirm(
+			@ApiParam(value = "Id of the composite transaction to commit", required = true) @PathParam("txid") String txid
+		){
 		LOG.info("Trying to commit transaction [{}]", txid);
 		
 		getCompositeTransactionParticipantService().confirm(txid);

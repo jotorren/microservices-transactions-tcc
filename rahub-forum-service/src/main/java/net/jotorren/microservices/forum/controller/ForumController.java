@@ -1,5 +1,12 @@
 package net.jotorren.microservices.forum.controller;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.ResponseHeader;
+
 import java.net.URI;
 
 import javax.ws.rs.GET;
@@ -13,6 +20,7 @@ import javax.ws.rs.core.UriInfo;
 
 import net.jotorren.microservices.forum.domain.Forum;
 import net.jotorren.microservices.forum.service.ForumService;
+import net.jotorren.microservices.rs.ExceptionRestHandler.ErrorDetails;
 import net.jotorren.microservices.tx.CompositeTransactionParticipantController;
 import net.jotorren.microservices.tx.CompositeTransactionParticipantService;
 
@@ -22,7 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 @Controller
-@Path("/forum")
+@Path("/")
+@Api(value = "Discussion board services")
 public class ForumController extends CompositeTransactionParticipantController {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ForumController.class);
@@ -36,24 +45,50 @@ public class ForumController extends CompositeTransactionParticipantController {
 	}
 	
 	@GET
-	@Path("/{id}")
+	@Path("{id}")
 	@Produces("application/json")
-	public Forum get(@PathParam("id") String id) {
-		LOG.info("Trying to get content item [{}] outside any transaction", id);
+    @ApiOperation(
+    		code = 200,
+            value = "Find a discussion board by its Id",
+            notes = "Queries data previously persisted in the database",
+            response = Forum.class,
+            produces = "application/json"
+        )
+	@ApiResponses(value = {
+			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+	})
+	public Forum get(
+			@ApiParam(value = "Id of the discussion board to retrieve", required = true) @PathParam("id") String id
+			) {
+		LOG.info("Trying to get discussion board [{}] outside any transaction", id);
 		
 		return service.getForum(id);
 	}
 
 	@POST
-	public Response save(@Context UriInfo uriInfo, Forum content) {
-		LOG.info("Trying to save content outside any transaction");
+    @ApiOperation(
+    		code = 201,
+            value = "Save a new discussion board in the database",
+            notes = "The newly created resource can be referenced by the URI returned in the the Location header field",
+            response = String.class,
+            responseHeaders = {
+    			 @ResponseHeader(name = "Location", description = "The URI of the saved discussion board", response = String.class)
+    		}
+        )
+	@ApiResponses(value = {
+			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+	})
+	public Response save(@Context UriInfo uriInfo, 
+			@ApiParam(value = "Data of the discussion board, including the Id of the referred source code item", required = true) Forum content
+			) {
+		LOG.info("Trying to save discussion board outside any transaction");
 		
 		String id = service.addNewForum(content);
-		LOG.info("New content item id set to [{}]", id);
+		LOG.info("New discussion board id set to [{}]", id);
 		
 		URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
 				.resolveTemplate("id", id).build();
-		LOG.info("New content item uri [{}]", location);
+		LOG.info("New discussion board uri [{}]", location);
 		
 		return Response.created(location).build();
 	}
@@ -61,25 +96,53 @@ public class ForumController extends CompositeTransactionParticipantController {
 	// Composite Transaction methods
 	
 	@GET
-	@Path("/{txid}/{id}")
+	@Path("{txid}/{id}")
 	@Produces("application/json")
-	public Forum getTxAware(@PathParam("txid") String txid, @PathParam("id") String id) {
-		LOG.info("Trying to get content item [{}] inside transaction [{}]", id, txid);
+    @ApiOperation(
+    		code = 200,
+            value = "Find a discussion board by its Id",
+            notes = "Queries the transaction uncommitted data in addition to the one previously persisted in the database",
+            response = Forum.class,
+            produces = "application/json"
+        )
+	@ApiResponses(value = {
+			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+	})
+	public Forum getTxAware(
+			@ApiParam(value = "Id of a composite transaction", required = true) @PathParam("txid") String txid, 
+			@ApiParam(value = "Id of the discussion board to retrieve", required = true) @PathParam("id") String id
+			) {
+		LOG.info("Trying to get discussion board [{}] inside transaction [{}]", id, txid);
 		
 		return service.getForum(txid, id);
 	}
 
 	@POST
-	@Path("/{txid}")
-	public Response saveTxAware(@Context UriInfo uriInfo, @PathParam("txid") String txid, Forum content) {
-		LOG.info("Trying to save content inside transaction [{}]", txid);
+	@Path("{txid}")
+    @ApiOperation(
+    		code = 201,
+            value = "Save a new discussion board enlisting the operation in a composite transaction",
+            notes = "No data will be persisted in the database until the transaction is explicitly committed. "
+            		+ "The newly created resource can be referenced by the URI returned in the the Location header field",
+            response = String.class,
+            responseHeaders = {
+    			 @ResponseHeader(name = "Location", description = "The URI of the saved discussion board", response = String.class)
+    		}
+        )
+	@ApiResponses(value = {
+			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+	})
+	public Response saveTxAware(@Context UriInfo uriInfo, 
+			@ApiParam(value = "Id of the composite transaction where the operation must be enlisted", required = true) @PathParam("txid") String txid, 
+			@ApiParam(value = "Data of the discussion board, including the Id of the referred source code item", required = true) Forum content) {
+		LOG.info("Trying to save discussion board inside transaction [{}]", txid);
 		
 		String id = service.addNewForum(txid, content);
-		LOG.info("New content item id set to [{}]", id);
+		LOG.info("New discussion board id set to [{}]", id);
 		
 		URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
 				.resolveTemplate("id", id).build();
-		LOG.info("New content item uri [{}]", location);
+		LOG.info("New discussion board uri [{}]", location);
 		
 		return Response.created(location).build();
 	}

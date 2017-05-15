@@ -47,7 +47,19 @@ public class ContentController extends CompositeTransactionParticipantController
 	@GET
 	@Path("{id}")
 	@Produces("application/json")
-	public SourceCodeItem get(@PathParam("id") String id) {
+    @ApiOperation(
+    		code = 200,
+            value = "Find a source code item by its Id",
+            notes = "Queries data previously persisted in the database",
+            response = SourceCodeItem.class,
+            produces = "application/json"
+        )
+	@ApiResponses(value = {
+			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+	})
+	public SourceCodeItem get(
+			@ApiParam(value = "Id of the item to retrieve", required = true) @PathParam("id") String id
+			) {
 		LOG.info("Trying to get content item [{}] outside any transaction", id);
 		
 		return service.getContent(id);
@@ -56,18 +68,18 @@ public class ContentController extends CompositeTransactionParticipantController
 	@POST
     @ApiOperation(
     		code = 201,
-            value = "Save new content",
+            value = "Save a new source code item in the database",
             notes = "The newly created resource can be referenced by the URI returned in the the Location header field",
             response = String.class,
             responseHeaders = {
-    			 @ResponseHeader(name = "Location", description = "The URI of the saved content", response = String.class)
+    			 @ResponseHeader(name = "Location", description = "The URI of the saved item", response = String.class)
     		}
         )
 	@ApiResponses(value = {
 			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
 	})
 	public Response save(@Context UriInfo uriInfo, 
-			@ApiParam(value = "Data of the source code item", required = true) SourceCodeItem content
+			@ApiParam(value = "Data of the item", required = true) SourceCodeItem content
 			) {
 		LOG.info("Trying to save content outside any transaction");
 		
@@ -86,7 +98,20 @@ public class ContentController extends CompositeTransactionParticipantController
 	@GET
 	@Path("{txid}/{id}")
 	@Produces("application/json")
-	public SourceCodeItem getTxAware(@PathParam("txid") String txid, @PathParam("id") String id) {
+    @ApiOperation(
+    		code = 200,
+            value = "Find a source code item by its Id",
+            notes = "Queries the transaction uncommitted data in addition to the one previously persisted in the database",
+            response = SourceCodeItem.class,
+            produces = "application/json"
+        )
+	@ApiResponses(value = {
+			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+	})
+	public SourceCodeItem getTxAware(
+			@ApiParam(value = "Id of a composite transaction", required = true) @PathParam("txid") String txid, 
+			@ApiParam(value = "Id of the item to retrieve", required = true) @PathParam("id") String id
+			) {
 		LOG.info("Trying to get content item [{}] inside transaction [{}]", id, txid);
 		
 		return service.getContent(txid, id);
@@ -96,11 +121,12 @@ public class ContentController extends CompositeTransactionParticipantController
 	@Path("{txid}")
     @ApiOperation(
     		code = 201,
-            value = "Save new content enlisting the operation in a composite transaction",
-            notes = "The newly created resource can be referenced by the URI returned in the the Location header field",
+            value = "Save a new source code item enlisting the operation in a composite transaction",
+            notes = "No data will be persisted in the database until the transaction is explicitly committed. "
+            		+ "The newly created resource can be referenced by the URI returned in the the Location header field",
             response = String.class,
             responseHeaders = {
-    			 @ResponseHeader(name = "Location", description = "The URI of the saved content", response = String.class)
+    			 @ResponseHeader(name = "Location", description = "The URI of the saved item", response = String.class)
     		}
         )
 	@ApiResponses(value = {
@@ -108,7 +134,7 @@ public class ContentController extends CompositeTransactionParticipantController
 	})
 	public Response saveTxAware(@Context UriInfo uriInfo, 
 			@ApiParam(value = "Id of the composite transaction where the operation must be enlisted", required = true) @PathParam("txid") String txid, 
-			@ApiParam(value = "Data of the source code item", required = true) SourceCodeItem content
+			@ApiParam(value = "Data of the item", required = true) SourceCodeItem content
 			) {
 		LOG.info("Trying to save content inside transaction [{}]", txid);
 		
