@@ -17,7 +17,7 @@ I would like to point out that Domain, Composite and Coordinator services have n
 
 
 
-And now the sequence of actions:
+Regarding the sequence of actions:
 
 1. A client makes a remote call to a composite service
 2. The composite service knows which domain services needs to invoke and passes that information to the coordinator
