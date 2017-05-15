@@ -8,9 +8,9 @@ Let's describe that approach. We will start by introducing all the actors:
 
 - **Context Services**. Each of the stateless and autonomous pieces that the whole system has been divided into.
 - **Composite Services**. Coarse-grained services operations which are composed by many calls to one or more context services.
-- **Command**. Data describing a persistence operation performed by any context service: "*that operation on a given entity inside certain environment*"
+- **Command**. Data describing a persistence operation performed by a context service: "*that operation on a given entity inside certain environment*"
 - **Composite transaction**. Set of commands that must be grouped and carried out together.
-- **Coordinator**. Service to manage the lifecycle of any composite transaction, deciding whether or not its changes (commands) must be applied to the corresponding underlying repositories.
+- **Coordinator**. Service to manage composite transactions lifecycle, deciding whether or not their changes (commands) must be applied to the corresponding underlying repositories.
 - **Persistent Messaging System**. Distributed store of composite transactions accessible by any service instance (context, composite or coordinator)
 
 I would like to point out that Context, Composite and Coordinator services have no 2PC/XA support and they can be dynamically allocated/destroyed.
