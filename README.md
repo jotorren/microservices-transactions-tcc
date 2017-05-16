@@ -63,12 +63,21 @@ mvn clean install
 
 ## Run
 
-First of all you must download and install a Zookeeper & Kafka servers. Please follow guidelines described in:
+First of all you must download and install Zookeeper & Kafka servers. Please follow guidelines described in:
 
 - https://zookeeper.apache.org/doc/r3.1.2/zookeeperStarted.html
 - https://kafka.apache.org/quickstart
 
 Once both servers are up and running you can start all services:
+
+- Composite service to create source code items and discussion boards + TCC Service
+
+```shell
+# inside your project home folder
+cd rahub-composite-service
+mvn spring-boot:run
+# default port 8090
+```
 
 - Domain service to create/query pieces of source code
 
@@ -77,6 +86,7 @@ Once both servers are up and running you can start all services:
 # inside your project home folder
 cd rahub-source-code-service
 mvn spring-boot:run
+# default port 8091
 ```
 
 - Domain service to create/query discussion boards about source code items
@@ -85,11 +95,31 @@ mvn spring-boot:run
 # inside your project home folder
 cd rahub-forum-service
 mvn spring-boot:run
+# default port 8092
 ```
-- Composite service to create source code items and discussion boards + TCC Service
 
-```shell
-# inside your project home folder
-cd rahub-composite-service
-mvn spring-boot:run
-```
+
+
+## Services documentation
+
+Generated dynamically by swagger.
+
+- http://localhost:8090/api/api-docs?url=/api/swagger.json
+
+![composite65](https://cloud.githubusercontent.com/assets/22961359/26103358/4ccbd47a-3a39-11e7-9eb9-8810d4efe123.png) 
+
+- http://localhost:8091/index.html?url=/content/swagger.json
+
+
+![sourcecode65](https://cloud.githubusercontent.com/assets/22961359/26103359/4cce7978-3a39-11e7-82c3-baa7f9024696.png) 
+
+- http://localhost:8092/index.html?url=/forum/swagger.json
+
+
+![forum65](https://cloud.githubusercontent.com/assets/22961359/26103360/4cd31258-3a39-11e7-9624-c100d0622a5c.png) 
+
+
+
+## Considerations
+
+(in progress)
