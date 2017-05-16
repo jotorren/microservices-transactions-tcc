@@ -44,10 +44,52 @@ Regarding the sequence of actions:
 
 
 
-## Implementation
+## Build
 
-(in progress)
+```shell
+# clone this repo
+# --depth 1 removes all but one .git commit history
+
+git clone --depth 1 https://github.com/jotorren/microservices-transactions-tcc.git my-project
+
+# change directory to your project
+cd my-project
+
+# build artifacts
+mvn clean install
+```
 
 
 
- 
+## Run
+
+First of all you must download and install a Zookeeper & Kafka servers. Please follow guidelines described in:
+
+- https://zookeeper.apache.org/doc/r3.1.2/zookeeperStarted.html
+- https://kafka.apache.org/quickstart
+
+Once both servers are up and running you can start all services:
+
+- Domain service to create/query pieces of source code
+
+
+```shell
+# inside your project home folder
+cd rahub-source-code-service
+mvn spring-boot:run
+```
+
+- Domain service to create/query discussion boards about source code items
+
+```shell
+# inside your project home folder
+cd rahub-forum-service
+mvn spring-boot:run
+```
+- Composite service to create source code items and discussion boards + TCC Service
+
+```shell
+# inside your project home folder
+cd rahub-composite-service
+mvn spring-boot:run
+```
