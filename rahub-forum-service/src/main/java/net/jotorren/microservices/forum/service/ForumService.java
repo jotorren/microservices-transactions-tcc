@@ -7,7 +7,7 @@ import net.jotorren.microservices.context.ThreadLocalContext;
 import net.jotorren.microservices.forum.dao.ForumDao;
 import net.jotorren.microservices.forum.dao.ForumTransactionAwareDao;
 import net.jotorren.microservices.forum.domain.Forum;
-import net.jotorren.microservices.tx.CompositeTransactionDao;
+import net.jotorren.microservices.tx.CompositeTransactionParticipantDao;
 import net.jotorren.microservices.tx.CompositeTransactionParticipantService;
 import net.jotorren.microservices.tx.EntityCommand;
 
@@ -43,7 +43,7 @@ public class ForumService extends CompositeTransactionParticipantService {
 	// Composite Transaction methods
 
 	@Override
-	public CompositeTransactionDao getCompositeTransactionDao() {
+	public CompositeTransactionParticipantDao getCompositeTransactionDao() {
 		return context.getBean(ForumTransactionAwareDao.class);
 	}
 	

@@ -7,7 +7,6 @@ import net.jotorren.microservices.context.ThreadLocalContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 public abstract class CompositeTransactionParticipantService {
 
@@ -28,7 +27,6 @@ public abstract class CompositeTransactionParticipantService {
 		LOG.info("Rolling back transaction [{}]", txId);
 	}
 	
-	@Transactional(readOnly=false)
 	public void confirm(String txId) {
 		ThreadLocalContext.remove(CURRENT_TRANSACTION_KEY);
 		
@@ -38,12 +36,12 @@ public abstract class CompositeTransactionParticipantService {
 			LOG.warn("Transaction [{}] does not exist. Ignoring commit call", txId);
 			return;
 		}
-		CompositeTransactionDao unsynchronizedDao = getCompositeTransactionDao();
+		CompositeTransactionParticipantDao unsynchronizedDao = getCompositeTransactionDao();
 		unsynchronizedDao.apply(transactionOperations);
 		
 		LOG.info("Committing transaction [{}]", txId);
 		unsynchronizedDao.commit();
 	}
 		
-	public abstract CompositeTransactionDao getCompositeTransactionDao();
+	public abstract CompositeTransactionParticipantDao getCompositeTransactionDao();
 }

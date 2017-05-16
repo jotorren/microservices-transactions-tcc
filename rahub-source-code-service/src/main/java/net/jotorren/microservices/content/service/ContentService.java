@@ -7,7 +7,7 @@ import net.jotorren.microservices.content.dao.ContentDao;
 import net.jotorren.microservices.content.dao.ContentTransactionAwareDao;
 import net.jotorren.microservices.content.domain.SourceCodeItem;
 import net.jotorren.microservices.context.ThreadLocalContext;
-import net.jotorren.microservices.tx.CompositeTransactionDao;
+import net.jotorren.microservices.tx.CompositeTransactionParticipantDao;
 import net.jotorren.microservices.tx.CompositeTransactionParticipantService;
 import net.jotorren.microservices.tx.EntityCommand;
 
@@ -43,7 +43,7 @@ public class ContentService extends CompositeTransactionParticipantService {
 	// Composite Transaction methods
 
 	@Override
-	public CompositeTransactionDao getCompositeTransactionDao() {
+	public CompositeTransactionParticipantDao getCompositeTransactionDao() {
 		return context.getBean(ContentTransactionAwareDao.class);
 	}
 	

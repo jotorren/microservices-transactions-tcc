@@ -7,7 +7,9 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
 import javax.persistence.SynchronizationType;
 
-public class CompositeTransactionDao {
+import org.springframework.transaction.annotation.Transactional;
+
+public class CompositeTransactionParticipantDao {
 
 	@PersistenceContext(type = PersistenceContextType.EXTENDED, synchronization = SynchronizationType.UNSYNCHRONIZED)
 	private EntityManager em;
@@ -28,6 +30,7 @@ public class CompositeTransactionDao {
 		em.remove(entity);
 	}
 
+	@Transactional(readOnly=false)
 	public void commit() {
 		em.joinTransaction();
 	}

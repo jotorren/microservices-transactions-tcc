@@ -139,39 +139,20 @@ Additionally, H2 web console is enabled in both cases and can be accessed throug
 
 #### Unsynchronized persistence contexts
 
-
+Persistence operations executed inside a composite transaction are delegated to *unsynchronized entity manager*s: you can create, change and delete entities without doing any change to the repository until you force the manager to join an existent `LOCAL/JTA` transaction (note the `@Transactional` annotation added to the `commit` method ).
 
 ```java
 @Repository
 @Scope("prototype")
-public class UnsynchronizedDao {
+public class CompositeTransactionParticipantDao {
 
 	@PersistenceContext(type = PersistenceContextType.EXTENDED, 
                         synchronization = SynchronizationType.UNSYNCHRONIZED)
 	private EntityManager em;
 
+  	@Transactional(readOnly=false)
   	public void commit() {
 		em.joinTransaction();
-	}
-  
-  	public void apply(List<EntityCommand<?>> transactionOperations) {
-		if (null == transactionOperations) {
-			return;
-		}
-
-		for (EntityCommand<?> command : transactionOperations) {
-			switch (command.getAction().ordinal()) {
-			case 0:
-				save(command.getEntity());
-				break;
-			case 1:
-				saveOrUpdate(command.getEntity());
-				break;
-			case 2:
-				remove(command.getEntity());
-				break;
-			}
-		}
 	}
   
 	public void save(Object entity) {
@@ -185,8 +166,21 @@ public class UnsynchronizedDao {
 	public void remove(Object entity) {
 		em.remove(entity);
 	}
+  
+    public <T> T findOne(Class<T> entityClass, Object pk){
+    	return getEntityManager().find(entityClass, pk);
+    }
 }
 ```
 
+As stated in [Spring ORM documentation](http://docs.spring.io/spring/docs/current/spring-framework-reference/html/orm.html): 
 
+> `PersistenceContextType.EXTENDED` is a completely different affair: This results in a so-called extended EntityManager, which is *not thread-safe* and hence must not be used in a concurrently accessed component such as a Spring-managed singleton bean
 
+This is the reason why we set `prototype` as scope for any `DAO` with an *unsynchronized persistence context* injected into it.
+
+And some final aspects to be aware of:
+
+Any call to the `executeUpdate()` method of a `Query` created through an *unsynchronized entity manager* will fail reporting: `javax.persistence.TransactionRequiredException: Executing an update/delete query`. Consequently, bulk update/delete operations are not supported.
+
+On the other hand, it is possible to create/execute a `Query` to look for data but in that case, only already persisted (committed) entries are searchable. If you want to include entities that have not yet been saved you must use `EntityManager` `find()` methods.
