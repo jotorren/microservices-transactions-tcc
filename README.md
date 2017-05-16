@@ -139,7 +139,7 @@ Additionally, H2 web console is enabled in both cases and can be accessed throug
 
 #### Unsynchronized persistence contexts
 
-Persistence operations executed inside a composite transaction are delegated to *unsynchronized entity manager*s: you can create, change and delete entities without doing any change to the repository until you force the manager to join an existent `LOCAL/JTA` transaction (note the `@Transactional` annotation added to the `commit` method ).
+Persistence operations executed inside a composite transaction are delegated to *unsynchronized entity manager*s: you can create, change and delete entities without doing any change to the repository until you force the manager to join an existent `LOCAL/JTA` transaction (note the `@Transactional` annotation added to the `commit()` method ).
 
 ```java
 @Repository
@@ -181,6 +181,59 @@ This is the reason why we set `prototype` as scope for any `DAO` with an *unsync
 
 And some final aspects to be aware of:
 
-Any call to the `executeUpdate()` method of a `Query` created through an *unsynchronized entity manager* will fail reporting: `javax.persistence.TransactionRequiredException: Executing an update/delete query`. Consequently, bulk update/delete operations are not supported.
+Any call to the `executeUpdate()` method of a `Query` created through an *unsynchronized entity manager* will fail reporting `javax.persistence.TransactionRequiredException: Executing an update/delete query`. Consequently, bulk update/delete operations are not supported.
 
-On the other hand, it is possible to create/execute a `Query` to look for data but in that case, only already persisted (committed) entries are searchable. If you want to include entities that have not yet been saved you must use `EntityManager` `find()` methods.
+On the other hand, it is possible to create/execute a `Query` to look for data but, in that case, only already persisted (committed) entries are searchable. If you want to retrieve entities that have not yet been saved (committed) you must use `EntityManager` `find()` methods.
+
+#### JPA entity listeners and callback methods
+
+*Default entity listeners* are listeners that should be applied to all entity classes. Currently, they can only be specified in a mapping XML that can be found in `src/main/resources/META-INF/orm.xml`
+
+*Callback* methods are user defined methods that are attached to entity lifecycle events and are invoked automatically by JPA when these events occur:
+
+- `@PrePersist` - before a new entity is persisted (added to the `EntityManager`).
+- `@PostPersist` - after storing a new entity in the database (during *commit* or *flush*).
+- `@PostLoad` - after an entity has been retrieved from the database.
+- `@PreUpdate` - when an entity is identified as modified by the `EntityManager`.
+- `@PostUpdate` - after updating an entity in the database (during *commit* or *flush*).
+- `@PreRemove` - when an entity is marked for removal in the `EntityManager`.
+- `@PostRemove` - after deleting an entity from the database (during *commit* or *flush*).
+
+(For further details see http://www.objectdb.com/java/jpa/persistence/event)
+
+If we want to find out which entities have been created, updated or removed through an *unsynchronized entity manager*, we only need *@Pre\* callback* methods:  
+
+```java
+public class ChangeStateJpaListener {
+
+	@PrePersist
+	void onPrePersist(Object o) {
+		enlist(o, EntityCommand.Action.INSERT);
+	}
+
+	@PreUpdate
+	void onPreUpdate(Object o) {
+		enlist(o, EntityCommand.Action.UPDATE);
+	}
+
+	@PreRemove
+	void onPreRemove(Object o) {
+		enlist(o, EntityCommand.Action.DELETE);
+	}
+  
+	private void enlist(Object entity, EntityCommand.Action action){
+		EntityCommand<Object> command = new EntityCommand<Object>();
+		command.setEntity(entity);
+		command.setAction(action);
+		command.setTimestamp(System.currentTimeMillis());
+		// send command to some store/queue
+	}
+}
+```
+
+#### Committing changes
+
+(in progress)
+
+
+
