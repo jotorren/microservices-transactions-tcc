@@ -122,4 +122,71 @@ Generated dynamically by swagger.
 
 ## Considerations
 
-(in progress)
+#### REST implementation
+
+Source code and forum services use Jersey whilst composite and TCC services rely on CXF. With regard to swagger ui, the former contain required static resources inside `src/main/resources/static` while the latter only depend on a [webjar](http://www.webjars.org/) and have an empty static folder.
+
+#### Repositories
+
+Source code and forum services use an embedded H2 file based database. You can check the configuration looking at their respective `src/main/resources/application.properties`. By default, both data models are initialized on startup, but that behavior can be disabled  by uncommenting the following lines:
+
+```properties
+#spring.jpa.generate-ddl: false
+#spring.jpa.hibernate.ddl-auto: none
+```
+
+Additionally, H2 web console is enabled in both cases and can be accessed through the URI `/h2/console`.
+
+#### Unsynchronized persistence contexts
+
+
+
+```java
+@Repository
+@Scope("prototype")
+public class UnsynchronizedDao {
+
+	@PersistenceContext(type = PersistenceContextType.EXTENDED, 
+                        synchronization = SynchronizationType.UNSYNCHRONIZED)
+	private EntityManager em;
+
+  	public void commit() {
+		em.joinTransaction();
+	}
+  
+  	public void apply(List<EntityCommand<?>> transactionOperations) {
+		if (null == transactionOperations) {
+			return;
+		}
+
+		for (EntityCommand<?> command : transactionOperations) {
+			switch (command.getAction().ordinal()) {
+			case 0:
+				save(command.getEntity());
+				break;
+			case 1:
+				saveOrUpdate(command.getEntity());
+				break;
+			case 2:
+				remove(command.getEntity());
+				break;
+			}
+		}
+	}
+  
+	public void save(Object entity) {
+		em.persist(entity);
+	}
+
+	public <T> T saveOrUpdate(T entity) {
+		return em.merge(entity);
+	}
+
+	public void remove(Object entity) {
+		em.remove(entity);
+	}
+}
+```
+
+
+
