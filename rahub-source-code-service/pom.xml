@@ -13,6 +13,10 @@
 	<name>rahub-source-code-service</name>
 	<description>Spring Boot raHub Source Code Service</description>
 
+	<properties>
+		<start-class>net.jotorren.microservices.content.RahubContentServiceApplication</start-class>
+	</properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

@@ -13,6 +13,10 @@
 	<name>rahub-forum-service</name>
 	<description>Spring Boot raHub Forum Service</description>
 
+	<properties>
+		<start-class>net.jotorren.microservices.forum.RahubForumServiceApplication</start-class>
+	</properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

@@ -12,6 +12,7 @@
 	<artifactId>rahub-cross-cutting-concerns</artifactId>
 	<name>rahub-cross-cutting-concerns</name>
 	<description>raHub cross cutting classes</description>
+	<packaging>jar</packaging>
 
 	<dependencies>
 		<dependency>
@@ -51,4 +52,16 @@
 			<artifactId>swagger-jersey2-jaxrs</artifactId>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

@@ -13,6 +13,10 @@
 	<name>rahub-composite-service</name>
 	<description>Spring Boot raHub Composite Service</description>
 
+	<properties>
+		<start-class>net.jotorren.microservices.RahubCompositeServiceApplication</start-class>
+	</properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.cxf</groupId>
