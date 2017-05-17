@@ -1,0 +1,112 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "description" : "Spring Boot raHub TCC Service",
+    "version" : "1.0.0",
+    "title" : "rahub-composite-service",
+    "contact" : {
+      "name" : "jotorren"
+    },
+    "license" : {
+      "name" : "Apache 2.0 License",
+      "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "basePath" : "/api/coordinator",
+  "tags" : [ {
+    "name" : "TCC Services"
+  } ],
+  "schemes" : [ "http" ],
+  "paths" : {
+    "/cancel" : {
+      "put" : {
+        "tags" : [ "TCC Services" ],
+        "summary" : "Cancel a composite transaction",
+        "description" : "Iterates over the list of transaction participants calling the TCC cancel method for each of them",
+        "operationId" : "cancel",
+        "consumes" : [ "application/tcc+json" ],
+        "produces" : [ "*/*" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "body",
+          "description" : "Transaction data",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/Transaction"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "successful operation"
+          },
+          "400" : {
+          	"description" : "invalid request: transaction must not be null, each participantLink must have an 'expires', invalid date format for participantLink 'expires', each participantLink must have a value for 'uri'"
+          },
+          "500" : {
+          	"description" : "unexpected error"
+          }
+        }
+      }
+    },
+    "/confirm" : {
+      "put" : {
+        "tags" : [ "TCC Services" ],
+        "summary" : "Confirm a composite transaction",
+        "description" : "Iterates over the list the transaction participants calling the TCC confirm method for each of them",
+        "operationId" : "confirm",
+        "consumes" : [ "application/tcc+json" ],
+        "produces" : [ "*/*" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "body",
+          "description" : "Transaction data",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/Transaction"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "successful operation"
+          },
+          "400" : {
+          	"description" : "invalid request: transaction must not be null, each participantLink must have an 'expires', invalid date format for participantLink 'expires', each participantLink must have a value for 'uri'"
+          },
+          "404" : {
+          	"description" : "transaction has timed out and was cancelled"
+          },
+          "409" : {
+          	"description" : "partial confirmation - check each participant for details"
+          },
+          "500" : {
+          	"description" : "unexpected error"
+          }
+        }
+      }
+    }
+  },
+  "definitions" : {
+    "Transaction" : {
+      "type" : "object",
+      "properties" : {
+        "participantLinks" : {
+          "type" : "array",
+          "items": {
+                "$ref" : "#/definitions/ParticipantLink"
+          }
+        }
+      }
+    },
+    "ParticipantLink" : {
+      "type" : "object",
+      "properties" : {
+        "uri" : {
+          "type" : "string"
+        },
+        "expires" : {
+          "type" : "string"
+        }
+      }
+    }
+  }
+}

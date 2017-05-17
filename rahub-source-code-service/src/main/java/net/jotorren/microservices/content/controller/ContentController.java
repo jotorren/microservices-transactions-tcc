@@ -14,13 +14,15 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import net.jotorren.microservices.content.domain.SourceCodeItem;
 import net.jotorren.microservices.content.service.ContentService;
-import net.jotorren.microservices.rs.ExceptionRestHandler.ErrorDetails;
+import net.jotorren.microservices.rs.ExceptionRestHandler;
 import net.jotorren.microservices.tx.CompositeTransactionParticipantController;
 import net.jotorren.microservices.tx.CompositeTransactionParticipantService;
 
@@ -54,9 +56,6 @@ public class ContentController extends CompositeTransactionParticipantController
             response = SourceCodeItem.class,
             produces = "application/json"
         )
-	@ApiResponses(value = {
-			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
-	})
 	public SourceCodeItem get(
 			@ApiParam(value = "Id of the item to retrieve", required = true) @PathParam("id") String id
 			) {
@@ -76,21 +75,27 @@ public class ContentController extends CompositeTransactionParticipantController
     		}
         )
 	@ApiResponses(value = {
-			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+			@ApiResponse(code=500, message="Error saving the given item", response = String.class)
 	})
 	public Response save(@Context UriInfo uriInfo, 
 			@ApiParam(value = "Data of the item", required = true) SourceCodeItem content
 			) {
-		LOG.info("Trying to save content outside any transaction");
-		
-		String id = service.addNewContent(content);
-		LOG.info("New content item id set to [{}]", id);
-		
-		URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
-				.resolveTemplate("id", id).build();
-		LOG.info("New content item uri [{}]", location);
-		
-		return Response.created(location).build();
+		try{
+			LOG.info("Trying to save content outside any transaction");
+			
+			String id = service.addNewContent(content);
+			LOG.info("New content item id set to [{}]", id);
+			
+			URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
+					.resolveTemplate("id", id).build();
+			LOG.info("New content item uri [{}]", location);
+			
+			return Response.created(location).build();
+		} catch (Exception e){
+			Response response =	Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(new ExceptionRestHandler().toString(e)).type(MediaType.TEXT_PLAIN).build();
+			throw new WebApplicationException(response);				
+		}
 	}
 	
 	// Composite Transaction methods
@@ -105,9 +110,6 @@ public class ContentController extends CompositeTransactionParticipantController
             response = SourceCodeItem.class,
             produces = "application/json"
         )
-	@ApiResponses(value = {
-			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
-	})
 	public SourceCodeItem getTxAware(
 			@ApiParam(value = "Id of a composite transaction", required = true) @PathParam("txid") String txid, 
 			@ApiParam(value = "Id of the item to retrieve", required = true) @PathParam("id") String id
@@ -130,21 +132,27 @@ public class ContentController extends CompositeTransactionParticipantController
     		}
         )
 	@ApiResponses(value = {
-			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+			@ApiResponse(code=500, message="Error saving the given item", response = String.class)
 	})
 	public Response saveTxAware(@Context UriInfo uriInfo, 
 			@ApiParam(value = "Id of the composite transaction where the operation must be enlisted", required = true) @PathParam("txid") String txid, 
 			@ApiParam(value = "Data of the item", required = true) SourceCodeItem content
 			) {
-		LOG.info("Trying to save content inside transaction [{}]", txid);
-		
-		String id = service.addNewContent(txid, content);
-		LOG.info("New content item id set to [{}]", id);
-		
-		URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
-				.resolveTemplate("id", id).build();
-		LOG.info("New content item uri [{}]", location);
-		
-		return Response.created(location).build();
+		try{
+			LOG.info("Trying to save content inside transaction [{}]", txid);
+			
+			String id = service.addNewContent(txid, content);
+			LOG.info("New content item id set to [{}]", id);
+			
+			URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
+					.resolveTemplate("id", id).build();
+			LOG.info("New content item uri [{}]", location);
+			
+			return Response.created(location).build();
+		} catch (Exception e){
+			Response response =	Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(new ExceptionRestHandler().toString(e)).type(MediaType.TEXT_PLAIN).build();
+			throw new WebApplicationException(response);				
+		}
 	}
 }

@@ -14,13 +14,15 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import net.jotorren.microservices.forum.domain.Forum;
 import net.jotorren.microservices.forum.service.ForumService;
-import net.jotorren.microservices.rs.ExceptionRestHandler.ErrorDetails;
+import net.jotorren.microservices.rs.ExceptionRestHandler;
 import net.jotorren.microservices.tx.CompositeTransactionParticipantController;
 import net.jotorren.microservices.tx.CompositeTransactionParticipantService;
 
@@ -54,9 +56,6 @@ public class ForumController extends CompositeTransactionParticipantController {
             response = Forum.class,
             produces = "application/json"
         )
-	@ApiResponses(value = {
-			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
-	})
 	public Forum get(
 			@ApiParam(value = "Id of the discussion board to retrieve", required = true) @PathParam("id") String id
 			) {
@@ -76,21 +75,27 @@ public class ForumController extends CompositeTransactionParticipantController {
     		}
         )
 	@ApiResponses(value = {
-			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+			@ApiResponse(code=500, message="Error saving the given discussion board", response = String.class)
 	})
 	public Response save(@Context UriInfo uriInfo, 
 			@ApiParam(value = "Data of the discussion board, including the Id of the referred source code item", required = true) Forum content
 			) {
-		LOG.info("Trying to save discussion board outside any transaction");
-		
-		String id = service.addNewForum(content);
-		LOG.info("New discussion board id set to [{}]", id);
-		
-		URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
-				.resolveTemplate("id", id).build();
-		LOG.info("New discussion board uri [{}]", location);
-		
-		return Response.created(location).build();
+		try {
+			LOG.info("Trying to save discussion board outside any transaction");
+			
+			String id = service.addNewForum(content);
+			LOG.info("New discussion board id set to [{}]", id);
+			
+			URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
+					.resolveTemplate("id", id).build();
+			LOG.info("New discussion board uri [{}]", location);
+			
+			return Response.created(location).build();
+		} catch (Exception e){
+			Response response =	Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(new ExceptionRestHandler().toString(e)).type(MediaType.TEXT_PLAIN).build();
+			throw new WebApplicationException(response);				
+		}
 	}
 	
 	// Composite Transaction methods
@@ -105,9 +110,6 @@ public class ForumController extends CompositeTransactionParticipantController {
             response = Forum.class,
             produces = "application/json"
         )
-	@ApiResponses(value = {
-			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
-	})
 	public Forum getTxAware(
 			@ApiParam(value = "Id of a composite transaction", required = true) @PathParam("txid") String txid, 
 			@ApiParam(value = "Id of the discussion board to retrieve", required = true) @PathParam("id") String id
@@ -130,20 +132,26 @@ public class ForumController extends CompositeTransactionParticipantController {
     		}
         )
 	@ApiResponses(value = {
-			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+			@ApiResponse(code=500, message="Error saving the given discussion board", response = String.class)
 	})
 	public Response saveTxAware(@Context UriInfo uriInfo, 
 			@ApiParam(value = "Id of the composite transaction where the operation must be enlisted", required = true) @PathParam("txid") String txid, 
 			@ApiParam(value = "Data of the discussion board, including the Id of the referred source code item", required = true) Forum content) {
-		LOG.info("Trying to save discussion board inside transaction [{}]", txid);
-		
-		String id = service.addNewForum(txid, content);
-		LOG.info("New discussion board id set to [{}]", id);
-		
-		URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
-				.resolveTemplate("id", id).build();
-		LOG.info("New discussion board uri [{}]", location);
-		
-		return Response.created(location).build();
+		try{ 
+			LOG.info("Trying to save discussion board inside transaction [{}]", txid);
+			
+			String id = service.addNewForum(txid, content);
+			LOG.info("New discussion board id set to [{}]", id);
+			
+			URI location = uriInfo.getAbsolutePathBuilder().path("{id}")
+					.resolveTemplate("id", id).build();
+			LOG.info("New discussion board uri [{}]", location);
+			
+			return Response.created(location).build();
+		} catch (Exception e){
+			Response response =	Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(new ExceptionRestHandler().toString(e)).type(MediaType.TEXT_PLAIN).build();
+			throw new WebApplicationException(response);				
+		}		
 	}
 }

@@ -50,7 +50,7 @@ public class CompositeController {
     		}
         )
 	@ApiResponses(value = {
-			@ApiResponse(code=503, message="Internal error", response = ErrorDetails.class)
+			@ApiResponse(code=500, message="Error processing request", response = ErrorDetails.class)
 	})
 	public Response save(@Context UriInfo uriInfo, 
 			@ApiParam(value = "Data to pass to server", required = true) CompositeData data
