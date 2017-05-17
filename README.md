@@ -263,6 +263,3 @@ public class ChangeStateJpaListener {
 
 (pending)
 
-#### Composite transaction IDs
-
-(pending)
