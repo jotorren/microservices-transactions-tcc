@@ -100,20 +100,30 @@ mvn spring-boot:run
 
 
 
-## Services documentation
+## Available services
 
-Generated dynamically by swagger.
-
-- http://localhost:8090/api/api-docs?url=/api/swagger.json
+- `/api`: http://localhost:8090/api/api-docs?url=/api/swagger.json
 
 ![composite65](https://cloud.githubusercontent.com/assets/22961359/26103358/4ccbd47a-3a39-11e7-9eb9-8810d4efe123.png) 
 
-- http://localhost:8091/index.html?url=/content/swagger.json
+
+
+- `/api/coordinator`: http://localhost:8090/api/api-docs?url=/swagger-tcc.json
+
+In the current example the TCC service runs on the same JAX-RS container as the composite does, but it will be preferable to deploy it on its own instance.
+
+![tcc-ops65](https://cloud.githubusercontent.com/assets/22961359/26151969/5c16e894-3b05-11e7-9e33-519ea8c3d9a8.png) 
+
+
+
+- `/content`: http://localhost:8091/index.html?url=/content/swagger.json
 
 
 ![sourcecode65](https://cloud.githubusercontent.com/assets/22961359/26103359/4cce7978-3a39-11e7-82c3-baa7f9024696.png) 
 
-- http://localhost:8092/index.html?url=/forum/swagger.json
+
+
+- `/forum`: http://localhost:8092/index.html?url=/forum/swagger.json
 
 
 ![forum65](https://cloud.githubusercontent.com/assets/22961359/26103360/4cd31258-3a39-11e7-9624-c100d0622a5c.png) 
@@ -136,6 +146,18 @@ Source code and forum services use an embedded H2 file based database. You can c
 ```
 
 Additionally, H2 web console is enabled in both cases and can be accessed through the URI `/h2/console`.
+
+
+
+## Static views
+
+classes and dependencies
+
+(pending)
+
+
+
+## Key aspects
 
 #### Unsynchronized persistence contexts
 
@@ -231,9 +253,14 @@ public class ChangeStateJpaListener {
 }
 ```
 
+#### Commands persistence and distribution
+
+(pending)
+
 #### Committing changes
 
-(in progress)
+(pending)
 
+#### Composite transaction IDs
 
-
+(pending)
