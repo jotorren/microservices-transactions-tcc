@@ -1,5 +1,8 @@
 package net.jotorren.microservices.content.configuration;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
@@ -8,6 +11,7 @@ import javax.annotation.PostConstruct;
 
 import net.jotorren.microservices.content.controller.ContentController;
 
+import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +19,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class WebServicesConfiguration extends ResourceConfig {
 
+    /**
+     * maximum number of entity bytes to be logged (and buffered) - if the entity is larger,
+     * logging filter will print (and buffer in memory) only the specified number of bytes
+     * and print "...more..." string at the end. Negative values are interpreted as zero.
+     */                     
+	@Value("${spring.jersey.log.entity.size:2048}")
+	private int maxlog;
+	
 	@Value("${swagger.title}")
 	private String title;
 
@@ -63,6 +75,11 @@ public class WebServicesConfiguration extends ResourceConfig {
 	public WebServicesConfiguration() {
 		// Register endpoints, providers, ...
 		this.register(ContentController.class);
+		this.register(new LoggingFeature(
+				Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME), 
+				Level.SEVERE, 
+				LoggingFeature.Verbosity.PAYLOAD_ANY, 
+				maxlog));
 	}
 	
 	@PostConstruct
