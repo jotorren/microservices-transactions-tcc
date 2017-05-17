@@ -110,7 +110,7 @@ mvn spring-boot:run
 
 - `/api/coordinator`: http://localhost:8090/api/api-docs?url=/swagger-tcc.json
 
-In the current example the TCC service runs on the same JAX-RS container as the composite does, but it will be preferable to deploy it on its own instance.
+In the current example TCC service runs on the same JAX-RS container as the composite does, but it will be preferable to deploy it on its own instance.
 
 ![tcc-ops65](https://cloud.githubusercontent.com/assets/22961359/26151969/5c16e894-3b05-11e7-9e33-519ea8c3d9a8.png) 
 
@@ -149,11 +149,11 @@ Additionally, H2 web console is enabled in both cases and can be accessed throug
 
 
 
-## Static views
+## Components
 
-classes and dependencies
+![Core classes](https://cloud.githubusercontent.com/assets/22961359/26158987/ae0acd88-3b1d-11e7-85a1-68ba872a3867.png)
 
-(pending)
+Pink classes are provided by [Atomikos](https://www.atomikos.com/Blog/TransactionManagementAPIForRESTTCC) and contain the TCC protocol implementation. Green ones are generic and reusable components to isolate and hide the complexity of composite transactions management. 
 
 
 
@@ -206,6 +206,8 @@ And some final aspects to be aware of:
 Any call to the `executeUpdate()` method of a `Query` created through an *unsynchronized entity manager* will fail reporting `javax.persistence.TransactionRequiredException: Executing an update/delete query`. Consequently, bulk update/delete operations are not supported.
 
 On the other hand, it is possible to create/execute a `Query` to look for data but, in that case, only already persisted (committed) entries are searchable. If you want to retrieve entities that have not yet been saved (committed) you must use `EntityManager` `find()` methods.
+
+Keep in mind that any repository constraint will be checked only when the entity manager joins the transaction (that is during the *commit* phase). Therefore it will be preferable to implement as many validations as possible out of the repositories. In doing so, we can detect potential problems in a very early stage, increasing the overall performance and consistency. 
 
 #### JPA entity listeners and callback methods
 
