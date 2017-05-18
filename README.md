@@ -353,9 +353,9 @@ So far, we have completed the *Try* part of the *Try*-*Cancel*/*Confirm* protoco
 
 
 
-[11] Once the Composite Service ends calling Domain Services and processing their responses, it invokes the `commit()` method on the Coordinator  (`TccRestCoordinator`) 
+[11] Once the Composite Service ends calling Domain Services, it invokes the `commit()` method on the Coordinator  (`TccRestCoordinator`) 
 
-[12] The coordinator sends a PUT request to the confirm URI of the TCC Service, including the Composite Transaction data as the request content
+[12] The coordinator sends a PUT request to the confirm URI of the TCC Service, adding the Composite Transaction data as the request content
 
 [13] The TCC Service iterates over the transaction participants list and, for each of them, sends a PUT request to their respective TCC confirm URI (computed during the Composite Transaction creation)
 
@@ -367,13 +367,13 @@ public void confirm(@PathParam("txid") String txid)
 
 [15] Uses the  `CompositeTransactionManager` instance provided by the Spring container to get all the Commands "enlisted" in that  partial transaction
 
-[16] Asks Spring container to return a **NEW** instance of a `DAO` with an *unsynchronized* `EntityManager` injected into it.
+[16] Asks the Spring container to return a **NEW** instance of a `DAO` with an *unsynchronized* `EntityManager` injected into it.
 
-[17] Invokes the `apply()` method on the `DAO` to translate Commands to persistence operations. Because of we're applying already persisted commands, we must "disable" the JPA global entity listener. This can be easily done by ensuring the `ThreadLocal` variable with the partial id has not been defined.
+[17] Invokes the `apply()` method on the `DAO` to translate the list of Commands to persistence operations. Because of we're applying already persisted commands, we must "disable" the JPA global entity listener. This can be easily done by ensuring no `ThreadLocal` variable with the partial id has been defined.
 
-[18] Forces the `DAO` to join a `LOCAL/JTA` transaction, and thus all persistence operations are applied to the underlying repository.
+[18] Forces the `DAO` to join a `LOCAL/JTA` transaction and, thus, all persistence operations are applied to the underlying repository.
 
-[19] When a confirm call from a Domain Service fails a 404 response is returned. Once the TCC Service receives it, the confirmation process is stopped and a 409 response is sent to the Coordinator who in turn propagates that value to the Composite Service.
+[19] When a confirm call from a Domain Service fails, a 404 response is returned. Once the TCC Service receives it, the confirmation process is stopped and a 409 response is sent back to the Coordinator who in turn propagates that value to the Composite Service.
 
 [20] If all confirm calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator who in turn propagates that value to the Composite Service.
 
@@ -385,7 +385,7 @@ And finally the *Cancel* branch:
 
 [11] If Composite Service detects some error condition, it can abort the Composite Transaction by invoking the `rollback()` method on the Coordinator  (`TccRestCoordinator`) 
 
-[12] The coordinator sends a PUT request to the cancel URI of the TCC Service, including the Composite Transaction data as the request content
+[12] In that case, the coordinator sends a PUT request to the cancel URI of the TCC Service, adding the Composite Transaction data as the request content
 
 [13] The TCC Service iterates over the transaction participants list and, for each of them, sends a PUT request to their respective TCC cancel URI (computed during the Composite Transaction creation)
 
@@ -395,8 +395,8 @@ And finally the *Cancel* branch:
 public void cancel(@PathParam("txid") String txid)
 ```
 
-[15] In the current implementation the Domain Service does nothing. Perhaps a valid action could be to "close" the partial transaction (when using the Kafka-based implementation of the  `CompositeTransactionManager` that could trigger the topic removal)
+[15] In the current implementation the Domain Service does nothing. Perhaps a valid action could be to "close" the partial transaction (when using the Kafka-based implementation of the  `CompositeTransactionManager` that could trigger a topic removal)
 
-[16] When a cancel call from a Domain Service fails a 404 response is returned. Once the TCC Service receives it, a log trace is written and the cancellation process goes on. When the last call finishes, the TCC Service returns a 204 response to the Coordinator who in turn propagates that value to the Composite Service.
+[16] When a cancel call from a Domain Service fails, a 404 response is returned. Once the TCC Service receives it, a log trace is written and the cancellation process goes on. When the last call finishes, the TCC Service returns a 204 response to the Coordinator who in turn propagates that value to the Composite Service.
 
 [17] If all cancel calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator who in turn propagates that value to the Composite Service.
