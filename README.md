@@ -347,11 +347,11 @@ private void enlist(Object entity, EntityCommand.Action action, String txId){
 
 [10] When using the Kafka-based implementation of  `CompositeTransactionManager`, the `EntityCommand` object is serialized to a `JSON` string before storing it in the appropriate topic.
 
+------
+
 
 
 So far, we have completed the *Try* part of the *Try*-*Cancel*/*Confirm* protocol. What about the *Cancel*/*Confirm* one? Let's start with *Confirm*
-
-
 
 [11] Once the Composite Service ends calling Domain Services, it invokes the `commit()` method on the Coordinator  (`TccRestCoordinator`) 
 
@@ -379,9 +379,9 @@ public void confirm(@PathParam("txid") String txid)
 
 
 
+------
+
 And finally the *Cancel* branch:
-
-
 
 [11] If Composite Service detects some error condition, it can abort the Composite Transaction by invoking the `rollback()` method on the Coordinator  (`TccRestCoordinator`) 
 
