@@ -397,6 +397,6 @@ public void cancel(@PathParam("txid") String txid)
 
 15) In the current implementation the Domain Service does nothing. 
 
-16) When a cancel call from a Domain Service fails, it responds with a 404 status code. Once the TCC Service receives it, logs, ignores it and stops the cancellation process. A 204 status code is returned to the Coordinator. Finally, the latter propagates that 204 to the Composite Service.
+16) When a cancel call from a Domain Service fails, it responds with a 404 status code. Once the TCC Service receives it, logs the error and stops the cancellation process. A 204 status code is returned to the Coordinator. Finally, the latter propagates that 204 to the Composite Service.
 
 17) If all cancel calls succeed (all return 204 status code) the TCC Service also responds with a 204 to the Coordinator. Finally, the latter propagates that 204 to the Composite Service.
