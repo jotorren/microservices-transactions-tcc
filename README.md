@@ -306,7 +306,7 @@ CompositeTransaction transaction = tccRestCoordinator.open(transactionTimeout, f
 		featureXyzTccUrl);
 ```
 
-[02] The Coordinator generates the Composite Transaction UUID and, for each participant, it computes the partial transaction id and uses the `CompositeTransactionManager` instance provided by the Spring container to initialize the persistence/distribution (with the Kafka-based implementation a persistent topic is created)
+[02] The Coordinator generates the Composite Transaction UUID. Then, for each participant it computes the partial transaction id and uses a `CompositeTransactionManager` instance (provided by the Spring container) to initialize the transaction persistence/distribution (with the Kafka-based implementation a persistent topic is created)
 
 [03] The Composite Service starts calling each Domain Service and processing their responses
 
