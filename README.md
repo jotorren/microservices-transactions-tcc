@@ -308,7 +308,7 @@ CompositeTransaction transaction = tccRestCoordinator.open(transactionTimeout, f
 
 [02] The Coordinator generates the Composite Transaction UUID. Then, for each participant it computes the partial transaction id and uses a `CompositeTransactionManager` instance (provided by the Spring container) to initialize the transaction persistence/distribution (with the Kafka-based implementation a persistent topic is created)
 
-[03] The Composite Service starts calling each Domain Service and processing their responses
+[03] The Composite Service starts calling each Domain Service and processes their responses
 
 [04] When a Domain Service receives a call, it extracts the transaction partial id from the URI
 
@@ -322,13 +322,13 @@ public Response txedOperation(@Context UriInfo uriInfo, @PathParam("txid") Strin
 ThreadLocalContext.put(CURRENT_TRANSACTION_KEY, txId);
 ```
 
-[06] Asks Spring container to return a **NEW** instance of a `DAO` with an *unsynchronized* `EntityManager` injected into it. Makes some calls to the `DAO` methods
+[06] Asks Spring container to return a **NEW** instance of a `DAO` with an *unsynchronized* `EntityManager` injected into it. Makes some calls to `DAO` methods
 
 [07] The `DAO` translates each method call to a set of persistence operations, delegating all of them to its `EntityManager`
 
 [08] For every persistence operation, the JPA container executes the global entity listener (in the same thread as the `EntityManager` operation)
 
-[09] The JPA listener checks if a partial transaction id has been informed by the service and in case of unavailability, it does nothing. Otherwise (when a partial id can be positively found) it creates a new `EntityCommand` instance with the entity, the type of operation, the partial transaction id, a timestamp and sends it to the `CompositeTransactionManager` instance provided by the Spring container.
+[09] The JPA listener checks if a partial transaction id has been informed by the service and in case of unavailability, it does nothing. Otherwise (when a partial id can be positively found) it creates a new `EntityCommand` instance with the entity, the type of operation, the partial transaction id and a timestamp. After that, it uses the `CompositeTransactionManager` instance (provided by the Spring container) to "enlist" the Command.
 
 ```java
 private void enlist(Object entity, EntityCommand.Action action, String txId){
