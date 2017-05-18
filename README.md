@@ -371,7 +371,7 @@ public void confirm(@PathParam("txid") String txid)
 
 [17] Invokes the `apply()` method on the `DAO` to translate the list of Commands to persistence operations. Because of we're applying already persisted commands, we must "disable" the JPA global entity listener. This can be easily done by ensuring no `ThreadLocal` variable with the partial id has been defined.
 
-[18] Forces the `DAO` to join a `LOCAL/JTA` transaction and, thus, all persistence operations are applied to the underlying repository.
+[18] Forces the `EntityManager` to join a `LOCAL/JTA` transaction and, thus, all persistence operations are applied to the underlying repository.
 
 [19] When a Domain Service fails processing the confirm call, a 404 response is returned. Once the TCC Service receives it, the confirmation process is stopped and a 409 response is sent back to the Coordinator who in turn propagates that value to the Composite Service.
 
