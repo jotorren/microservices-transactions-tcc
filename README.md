@@ -299,7 +299,57 @@ public void apply(List<EntityCommand<?>> transactionOperations) {
 
 #### 5. Composite Transaction lifecycle
 
-open - enlist - commit
+01) A Composite Service asks the Coordinator  (`TccRestCoordinator`) to open a new Composite Transaction passing the maximum amount of time (in milliseconds) to complete the transaction and the URL of each participant (Domain Service) to cancel/confirm its operations (as specified by the TCC protocol).
 
-(pending)
+```java
+CompositeTransaction transaction = tccRestCoordinator.open(
+		transactionTimeout, 
+		featureAbcTccUrl, 
+		featureXyzTccUrl);
+```
+
+02) The Coordinator generates the Composite Transaction UUID and for each participant, it computes the partial transaction id and calls the `CompositeTransactionManager` instance provided by the Spring container to initialize the persistence/distribution (with the Kafka-based implementation a persistent topic is created)
+
+03) The Composite Service starts calling each Domain Service and processing their responses
+
+04) When a Domain Service receives a call, it extracts the transaction partial id from the URI
+
+```java
+public Response txedOperation(@Context UriInfo uriInfo, @PathParam("txid") String txid, Feature data)
+```
+
+ 05) Defines a `ThreadLocal` variable and sets its value to the transaction partial id
+
+```java
+ThreadLocalContext.put(CURRENT_TRANSACTION_KEY, txId);
+```
+
+06) Asks Spring container to return a **NEW** instance of a `DAO` with an unsynchronized `EntityManager` injected into it. Makes some calls to the `DAO` methods
+
+07) The `DAO` translates each method call to a set of persistence operations, delegating all of them to its `EntityManager`
+
+08) The JPA container executes the global entity listener (in the same thread as the `EntityManager` operations)
+
+09) The JPA listener checks if a partial transaction id has been informed by the service and in case of unavailability, it does nothing. Otherwise (when a partial id can be positively found) it creates a new `EntityCommand` instance with the entity, the type of operation, the partial transaction id, a timestamp and sends it to the `CompositeTransactionManager` instance provided by the Spring container.
+
+```java
+private void enlist(Object entity, EntityCommand.Action action, String txId){
+	
+	EntityCommand<Object> command = new EntityCommand<Object>();
+	command.setEntity(entity);
+	command.setAction(action);
+	command.setTransactionId(txId);
+	command.setTimestamp(System.currentTimeMillis());
+	
+	CompositeTransactionManager txManager = 
+		SpringContext.getBean(CompositeTransactionManager.class);
+	txManager.enlist(txId, command);
+}
+```
+
+10) When using the Kafka-based implementation of  `CompositeTransactionManager`, the `EntityCommand` object is serialized to a `JSON` string before storing it in the appropriate topic.
+
+
+
+So far, we have completed the *Try* part of the *Try*-*Cancel*/*Confirm* protocol. What about the *Cancel*/*Confirm* one? Let's start with *Confirm*
 
