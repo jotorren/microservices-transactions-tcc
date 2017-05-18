@@ -57,4 +57,8 @@ public class TccRestCoordinator {
 	public Response rollback(Transaction transaction){
 		return tccCoordinatorClient.path("/cancel").request().put(Entity.entity(transaction, "application/tcc+json"));
 	}
+	
+	public void close(CompositeTransaction transaction){
+		txManager.close(transaction.getId());
+	}
 }
