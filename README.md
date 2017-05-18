@@ -373,13 +373,13 @@ public void confirm(@PathParam("txid") String txid)
 
 18) Forces the `DAO` to join a `LOCAL/JTA` transaction, and thus all persistence operations are applied to the underlying repository.
 
-19) When a confirm call from a Domain Service fails, it responds with a 404 status code. Once the TCC Service receives it, it stops the confirmation process and returns a 409 status code to the Coordinator. Finally, the latter propagates that 409 to the Composite Service.
+19) When a confirm call from a Domain Service fails a 404 response is returned. Once the TCC Service receives it, the confirmation process is stopped and a 409 response is sent to the Coordinator who in turn propagates that value to the Composite Service.
 
-20) If all confirm calls succeed (all return 204 status code) the TCC Service also responds with a 204 to the Coordinator. Finally, the latter propagates that 204 to the Composite Service.
+20) If all confirm calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator who in turn propagates that value to the Composite Service.
 
 
 
-The *Cancel* part is very similar to the *Confirm*:
+The *Cancel* branch is very similar to the latest:
 
 
 
@@ -395,8 +395,11 @@ The *Cancel* part is very similar to the *Confirm*:
 public void cancel(@PathParam("txid") String txid)
 ```
 
-15) In the current implementation the Domain Service does nothing. 
+15) In the current implementation the Domain Service does nothing. Perhaps a valid action could be to "close" the partial transaction (when using the Kafka-based implementation of the  `CompositeTransactionManager` that could trigger the topic removal)
 
-16) When a cancel call from a Domain Service fails, it responds with a 404 status code. Once the TCC Service receives it, logs the error and stops the cancellation process. A 204 status code is returned to the Coordinator. Finally, the latter propagates that 204 to the Composite Service.
+16) When a cancel call from a Domain Service fails a 404 response is returned. Once the TCC Service receives it, a log trace is written and the cancellation process goes on. When the last call finishes, the TCC Service returns a 204 response to the Coordinator who in turn propagates that value to the Composite Service.
 
-17) If all cancel calls succeed (all return 204 status code) the TCC Service also responds with a 204 to the Coordinator. Finally, the latter propagates that 204 to the Composite Service.
+17) If all cancel calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator who in turn propagates that value to the Composite Service.
+
+
+
