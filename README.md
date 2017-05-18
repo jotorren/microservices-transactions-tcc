@@ -299,16 +299,14 @@ public void apply(List<EntityCommand<?>> transactionOperations) {
 
 #### 5. Composite Transaction lifecycle
 
-01) A Composite Service asks the Coordinator  (`TccRestCoordinator`) to open a new Composite Transaction passing the maximum amount of time (in milliseconds) to complete the transaction and the URL of each participant (Domain Service) to cancel/confirm its operations (as specified by the TCC protocol).
+01) A Composite Service asks the Coordinator  (`TccRestCoordinator`) to open a new Composite Transaction. The call includes the maximum amount of time (in milliseconds) to complete the transaction and the URL of each participant (Domain Service) to be used when cancelling/confirming its operations (as specified by the TCC protocol).
 
 ```java
-CompositeTransaction transaction = tccRestCoordinator.open(
-		transactionTimeout, 
-		featureAbcTccUrl, 
+CompositeTransaction transaction = tccRestCoordinator.open(transactionTimeout, featureAbcTccUrl, 
 		featureXyzTccUrl);
 ```
 
-02) The Coordinator generates the Composite Transaction UUID and for each participant, it computes the partial transaction id and calls the `CompositeTransactionManager` instance provided by the Spring container to initialize the persistence/distribution (with the Kafka-based implementation a persistent topic is created)
+02) The Coordinator generates the Composite Transaction UUID and, for each participant, it computes the partial transaction id and uses the `CompositeTransactionManager` instance provided by the Spring container to initialize the persistence/distribution (with the Kafka-based implementation a persistent topic is created)
 
 03) The Composite Service starts calling each Domain Service and processing their responses
 
@@ -324,11 +322,11 @@ public Response txedOperation(@Context UriInfo uriInfo, @PathParam("txid") Strin
 ThreadLocalContext.put(CURRENT_TRANSACTION_KEY, txId);
 ```
 
-06) Asks Spring container to return a **NEW** instance of a `DAO` with an unsynchronized `EntityManager` injected into it. Makes some calls to the `DAO` methods
+06) Asks Spring container to return a **NEW** instance of a `DAO` with an *unsynchronized* `EntityManager` injected into it. Makes some calls to the `DAO` methods
 
 07) The `DAO` translates each method call to a set of persistence operations, delegating all of them to its `EntityManager`
 
-08) The JPA container executes the global entity listener (in the same thread as the `EntityManager` operations)
+08) For every persistence operation, the JPA container executes the global entity listener (in the same thread as the `EntityManager` operation)
 
 09) The JPA listener checks if a partial transaction id has been informed by the service and in case of unavailability, it does nothing. Otherwise (when a partial id can be positively found) it creates a new `EntityCommand` instance with the entity, the type of operation, the partial transaction id, a timestamp and sends it to the `CompositeTransactionManager` instance provided by the Spring container.
 
@@ -353,3 +351,52 @@ private void enlist(Object entity, EntityCommand.Action action, String txId){
 
 So far, we have completed the *Try* part of the *Try*-*Cancel*/*Confirm* protocol. What about the *Cancel*/*Confirm* one? Let's start with *Confirm*
 
+
+
+11) Once the Composite Service ends calling Domain Services and processing their responses, it invokes the `commit()` method on the Coordinator  (`TccRestCoordinator`) 
+
+12) The coordinator sends a PUT request to the confirm URI of the TCC Service, including the Composite Transaction data as the request content
+
+13) The TCC Service iterates over the transaction participants list and, for each of them, sends a PUT request to their respective TCC confirm URI (computed during the Composite Transaction creation)
+
+14) When a Domain Service receives the confirm call, it extracts the transaction partial id from the URI
+
+```java
+public void confirm(@PathParam("txid") String txid)
+```
+
+15) Uses the  `CompositeTransactionManager` instance provided by the Spring container to get all the Commands "enlisted" in that  partial transaction
+
+16) Asks Spring container to return a **NEW** instance of a `DAO` with an *unsynchronized* `EntityManager` injected into it.
+
+17) Invokes the `apply()` method on the `DAO` to translate Commands to persistence operations. Because of we're applying already persisted commands, we must "disable" the JPA global entity listener. This can be easily done by ensuring the `ThreadLocal` variable with the partial id has not been defined.
+
+18) Forces the `DAO` to join a `LOCAL/JTA` transaction, and thus all persistence operations are applied to the underlying repository.
+
+19) When a confirm call from a Domain Service fails, it responds with a 404 status code. Once the TCC Service receives it, it stops the confirmation process and returns a 409 status code to the Coordinator. Finally, the latter propagates that 409 to the Composite Service.
+
+20) If all confirm calls succeed (all return 204 status code) the TCC Service also responds with a 204 to the Coordinator. Finally, the latter propagates that 204 to the Composite Service.
+
+
+
+The *Cancel* part is very similar to the *Confirm*:
+
+
+
+11) If Composite Service detects some error condition, it can abort the Composite Transaction by invoking the `rollback()` method on the Coordinator  (`TccRestCoordinator`) 
+
+12) The coordinator sends a PUT request to the cancel URI of the TCC Service, including the Composite Transaction data as the request content
+
+13) The TCC Service iterates over the transaction participants list and, for each of them, sends a PUT request to their respective TCC cancel URI (computed during the Composite Transaction creation)
+
+14) When a Domain Service receives the cancel call, it extracts the transaction partial id from the URI
+
+```java
+public void cancel(@PathParam("txid") String txid)
+```
+
+15) In the current implementation the Domain Service does nothing. 
+
+16) When a cancel call from a Domain Service fails, it responds with a 404 status code. Once the TCC Service receives it, logs, ignores it and stops the cancellation process. A 204 status code is returned to the Coordinator. Finally, the latter propagates that 204 to the Composite Service.
+
+17) If all cancel calls succeed (all return 204 status code) the TCC Service also responds with a 204 to the Coordinator. Finally, the latter propagates that 204 to the Composite Service.
