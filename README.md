@@ -159,9 +159,9 @@ Pink classes are provided by [Atomikos](https://www.atomikos.com/Blog/Transactio
 
 ## Key aspects
 
-#### Unsynchronized persistence contexts
+#### 1. Transactional persistence operations: unsynchronized persistence contexts
 
-Persistence operations executed inside a composite transaction are delegated to *unsynchronized entity manager*s: you can create, change and delete entities without doing any change to the repository until you force the manager to join an existent `LOCAL/JTA` transaction (note the `@Transactional` annotation added to the `commit()` method ).
+Persistence operations executed inside a Composite Transaction are delegated to *unsynchronized entity manager*s: you can create, change and delete entities without doing any change to the repository until you force the manager to join an existent `LOCAL/JTA` transaction (note the `@Transactional` annotation present in the `commit()` method ).
 
 ```java
 @Repository
@@ -207,9 +207,11 @@ Any call to the `executeUpdate()` method of a `Query` created through an *unsync
 
 On the other hand, it is possible to create/execute a `Query` to look for data but, in that case, only already persisted (committed) entries are searchable. If you want to retrieve entities that have not yet been saved (committed) you must use `EntityManager` `find()` methods.
 
-Keep in mind that any repository constraint will be checked only when the entity manager joins the transaction (that is during the *commit* phase). Therefore it will be preferable to implement as many validations as possible out of the repositories. In doing so, we can detect potential problems in a very early stage, increasing the overall performance and consistency. 
+Keep in mind that any repository constraint will be checked only when the `EntityManager` joins the transaction (that is during the *commit* phase). Therefore it will be preferable to implement as many validations as possible out of the repositories. In doing so, we can detect potential problems in a very early stage, increasing the overall performance and consistency of the system.
 
-#### JPA entity listeners and callback methods
+
+
+#### 2. From persistence operation to Command: JPA entity listeners and callback methods
 
 *Default entity listeners* are listeners that should be applied to all entity classes. Currently, they can only be specified in a mapping XML that can be found in `src/main/resources/META-INF/orm.xml`
 
@@ -255,11 +257,49 @@ public class ChangeStateJpaListener {
 }
 ```
 
-#### Commands persistence and distribution
 
-(pending)
 
-#### Committing changes
+#### 3. Commands persistence and distribution
+
+At this point we know how persistence operations from a given Domain Service are translated into Commands, but once generated we need to save and distribute them to all available instances of that service. This is accomplished by using Kafka persistent topics. Let's have a deeper look at the proposed mechanism:
+
+When a Composite Service asks the Coordinator (`TccRestCoordinator`) to open a new Composite Transaction, the first thing the latter does is to generate an UUID to uniquely identify that transaction. Then it creates as many topics as different Domain Services must be included, assigning them a name resulting from concatenating the UUID and an internal sequence number (building the so-called *partial transaction id*). Once all resources have been allocated, it returns to the Composite Service a `CompositeTransaction` object that includes the transaction global UUID and all the partial transaction ids. From this moment on, any call dispatched by the Composite Service to a Domain Service will always include the corresponding partial transaction id (as an extra `@PathParam`)
+
+Furthermore, the JPA entity listener responsible for generating Commands (see point #2) requires the name of the topic to use for publishing them (after a proper serialization process has been applied). How can that standard JPA class obtain a value available inside an `Spring` bean? `ThreadLocal` variables come to the rescue: just before a Domain Service makes the first call to a `DAO`, it adds its partial transaction id to a `ThreadLocal` variable. Because of JPA listeners run in the same thread as the `EntityManager` operation they have access to any  `ThreadLocal` variable created by the service and can retrieve the partial transaction id from it. Finally, a `org.springframework.kafka.core.KafkaTemplate` instance is used to send the `JSON` representation of the Command to the appropriate topic.
+
+
+
+#### 4. From Command to persistence operation: inherited method from `CompositeTransactionParticipantDao`
+
+Because an `EntityCommand` object contains the entity to create/update/delete and the action to apply to it, it's very straightforward to find out which persistence operation must be executed by a given `EntityManager`; this is as simple as adding an special method to the generic `CompositeTransactionParticipantDao` where the`EntityManager` is injected:
+
+```java
+public void apply(List<EntityCommand<?>> transactionOperations) {
+	if (null == transactionOperations) {
+		return;
+	}
+
+	for (EntityCommand<?> command : transactionOperations) {
+		switch (command.getAction().ordinal()) {
+		case 0:
+			save(command.getEntity());
+			break;
+		case 1:
+			saveOrUpdate(command.getEntity());
+			break;
+		case 2:
+			remove(command.getEntity());
+			break;
+		}
+	}
+}
+```
+
+
+
+#### 5. Composite Transaction lifecycle
+
+open - enlist - commit
 
 (pending)
 
