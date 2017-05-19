@@ -134,11 +134,11 @@ In the current example TCC service runs on the same JAX-RS container as the comp
 
 #### REST implementation
 
-Source code and forum services use Jersey whilst composite and TCC services rely on CXF. With regard to swagger ui, the former contain required static resources inside `src/main/resources/static` while the latter only depend on a [webjar](http://www.webjars.org/) and have an empty static folder.
+In the example we use Jersey for Domain Services whilst Composite and TCC services rely on CXF. With regard to swagger ui, the former contain required static resources inside `src/main/resources/static` while the latter only depend on a [webjar](http://www.webjars.org/) and have an empty static folder.
 
 #### Repositories
 
-Source code and forum services use an embedded H2 file based database. You can check the configuration looking at their respective `src/main/resources/application.properties`. By default, both data models are initialized on startup, but that behavior can be disabled  by uncommenting the following lines:
+Our sample Domain Services use an embedded H2 file based database. You can check the configuration looking at their respective `src/main/resources/application.properties`. By default, both data models are initialized on startup, but that behavior can be disabled  by uncommenting the following lines:
 
 ```properties
 #spring.jpa.generate-ddl: false
@@ -157,11 +157,11 @@ Pink classes are provided by [Atomikos](https://www.atomikos.com/Blog/Transactio
 
 
 
-## Key aspects
+## Implementation key aspects
 
 #### 1. Transactional persistence operations: unsynchronized persistence contexts
 
-Persistence operations executed inside a Composite Transaction are delegated to *unsynchronized entity manager*s: you can create, change and delete entities without doing any change to the repository until you force the manager to join an existent `LOCAL/JTA` transaction (note the `@Transactional` annotation present in the `commit()` method ).
+Persistence operations executed inside a Composite Transaction are delegated to *unsynchronized entity manager*s: you can create, change and delete entities without doing any change to the repository until you force the `EntityManager` to join an existent `LOCAL/JTA` transaction (note the `@Transactional` annotation present in the `commit()` method ).
 
 ```java
 @Repository
@@ -203,7 +203,7 @@ This is the reason why we set `prototype` as scope for any `DAO` with an *unsync
 
 And some final aspects to be aware of:
 
-Any call to the `executeUpdate()` method of a `Query` created through an *unsynchronized entity manager* will fail reporting `javax.persistence.TransactionRequiredException: Executing an update/delete query`. Consequently, bulk update/delete operations are not supported.
+Any call to the `executeUpdate()` method of a `Query` created through an *unsynchronized* `EntityManager` will fail reporting `javax.persistence.TransactionRequiredException: Executing an update/delete query`. Consequently, bulk update/delete operations are not supported.
 
 On the other hand, it is possible to create/execute a `Query` to look for data but, in that case, only already persisted (committed) entries are searchable. If you want to retrieve entities that have not yet been saved (committed) you must use `EntityManager` `find()` methods.
 
@@ -261,11 +261,11 @@ public class ChangeStateJpaListener {
 
 #### 3. Commands persistence and distribution
 
-At this point we know how persistence operations from a given Domain Service are translated into Commands, but once generated we need to save and distribute them to all available instances of that service. This is accomplished by using Kafka persistent topics. Let's have a deeper look at the proposed mechanism:
+At this point we know how persistence operations executed by a service are translated into Commands, but once instantiated we need to save and distribute them to all service instances. This is accomplished by using Kafka persistent topics. Let's have a deeper look at the proposed mechanism:
 
-When a Composite Service asks the Coordinator (`TccRestCoordinator`) to open a new Composite Transaction, the first thing the latter does is to generate an UUID to uniquely identify that transaction. Then it creates as many topics as different Domain Services must be included, assigning them a name resulting from concatenating the UUID and an internal sequence number (building the so-called *partial transaction id*). Once all resources have been allocated, it returns to the Composite Service a `CompositeTransaction` object that includes the transaction global UUID and all the partial transaction ids. From this moment on, any call dispatched by the Composite Service to a Domain Service will always include the corresponding partial transaction id (as an extra `@PathParam`)
+When a Composite Service asks the Coordinator (`TccRestCoordinator`) to open a new Composite Transaction, the first thing the latter does is to generate an UUID to uniquely identify that transaction. Then it creates as many topics as different Domain Services must be coordinated, assigning them a name that results from concatenating the UUID and an internal sequence number (building the so-called *partial transaction id*). Once all resources have been allocated, it returns to the Composite Service a `CompositeTransaction` object that includes the transaction global UUID and all partial ids. From this moment on, any call dispatched by the Composite Service to a Domain Service will always include the corresponding partial transaction id (as an extra `@PathParam`)
 
-Furthermore, the JPA entity listener responsible for generating Commands (see point #2) requires the name of the topic to use for publishing them (after a proper serialization process has been applied). How can that standard JPA class obtain a value available inside an `Spring` bean? `ThreadLocal` variables come to the rescue: just before a Domain Service makes the first call to a `DAO`, it adds its partial transaction id to a `ThreadLocal` variable. Because of JPA listeners run in the same thread as the `EntityManager` operation they have access to any  `ThreadLocal` variable created by the service and can retrieve the partial transaction id from it. Finally, a `org.springframework.kafka.core.KafkaTemplate` instance is used to send the `JSON` representation of the Command to the appropriate topic.
+Furthermore, the JPA entity listener responsible for generating Commands (see point #2) requires the name of the topic to use for publishing them (after a proper serialization process has been applied to the Command). How can that standard JPA class obtain a value available inside an `Spring` bean? `ThreadLocal` variables come to the rescue: just before the first call to a `DAO`, the Domain Service adds its partial transaction id to a `ThreadLocal` variable. Because of JPA listeners run in the same thread as the `EntityManager` operation, they have access to any  `ThreadLocal` variable created by the service and can retrieve the partial transaction id from it. Finally, a `org.springframework.kafka.core.KafkaTemplate` instance is used to send the `JSON` representation of the Command to the appropriate topic.
 
 
 
@@ -299,14 +299,14 @@ public void apply(List<EntityCommand<?>> transactionOperations) {
 
 #### 5. Composite Transaction lifecycle
 
-[01] A Composite Service asks the Coordinator  (`TccRestCoordinator`) to open a new Composite Transaction. The call includes the maximum amount of time (in milliseconds) to complete the transaction and the URL of each participant (Domain Service) to be used when cancelling/confirming its operations (as specified by the TCC protocol).
+[01] A Composite Service asks the Coordinator  (`TccRestCoordinator`) to open a new Composite Transaction. The call arguments include the maximum amount of time (in milliseconds) to complete the transaction and the URL of each participant (Domain Service) to be used when cancelling/confirming its operations (as specified by the TCC protocol).
 
 ```java
 CompositeTransaction transaction = tccRestCoordinator.open(transactionTimeout, featureAbcTccUrl, 
 		featureXyzTccUrl);
 ```
 
-[02] The Coordinator generates the Composite Transaction UUID. Then, for each participant it computes the partial transaction id and uses a `CompositeTransactionManager` instance (provided by the Spring container) to initialize the transaction persistence/distribution (with the Kafka-based implementation a persistent topic is created)
+[02] The Coordinator generates the Composite Transaction UUID. Then, for each participant it computes the partial transaction id and uses a `CompositeTransactionManager` (instance provided by Spring container) to initialize the transaction persistence/distribution (with the Kafka-based implementation a persistent topic is created for each Domain Service)
 
 [03] The Composite Service starts calling each Domain Service and processes their responses
 
@@ -324,11 +324,11 @@ ThreadLocalContext.put(CURRENT_TRANSACTION_KEY, txId);
 
 [06] Asks Spring container to return a **NEW** instance of a `DAO` with an *unsynchronized* `EntityManager` injected into it. Makes some calls to `DAO` methods
 
-[07] The `DAO` translates each method call to a set of persistence operations, delegating all of them to its `EntityManager`
+[07] The `DAO` translates each method call to a set of persistence operations, delegating their execution to its `EntityManager`
 
 [08] For every persistence operation, the JPA container executes the global entity listener (in the same thread as the `EntityManager` operation)
 
-[09] The JPA listener checks if a partial transaction id has been informed by the service and in case of unavailability, it does nothing. Otherwise (when a partial id can be positively found) it creates a new `EntityCommand` instance with the entity, the type of operation, the partial transaction id and a timestamp. After that, it uses the `CompositeTransactionManager` instance (provided by the Spring container) to "enlist" the Command.
+[09] The JPA listener checks if a partial transaction id has been informed by the service and in case of unavailability it does nothing. Otherwise (when a partial id can be positively found) it creates a new `EntityCommand` instance grouping the entity, the type of operation, the partial transaction id and a timestamp. After that, it uses the `CompositeTransactionManager` (instance provided by Spring container) to "enlist" the Command.
 
 ```java
 private void enlist(Object entity, EntityCommand.Action action, String txId){
@@ -345,7 +345,7 @@ private void enlist(Object entity, EntityCommand.Action action, String txId){
 }
 ```
 
-[10] When using the Kafka-based implementation of  `CompositeTransactionManager`, the `EntityCommand` object is serialized to a `JSON` string before storing it in the appropriate topic.
+[10] With the Kafka-based implementation of  `CompositeTransactionManager`, the `EntityCommand` object is serialized to a `JSON` string prior to storing it in a topic.
 
 ------
 
@@ -355,9 +355,9 @@ So far, we have completed the *Try* part of the *Try*-*Cancel*/*Confirm* protoco
 
 [11] Once the Composite Service ends calling Domain Services, it invokes the `commit()` method on the Coordinator  (`TccRestCoordinator`) 
 
-[12] The coordinator sends a PUT request to the confirm URI of the TCC Service, adding the Composite Transaction data as the request content
+[12] The coordinator sends a PUT request to the "confirm URI" of the TCC Service, adding the Composite Transaction data as the request content
 
-[13] The TCC Service iterates over the transaction participants list and, for each of them, sends a PUT request to their respective TCC confirm URI (computed during the Composite Transaction creation)
+[13] The TCC Service iterates over the transaction participants list and, for each of them, sends a PUT request to their respective "TCC confirm URI" (computed during the Composite Transaction creation)
 
 [14] When a Domain Service receives the confirm call, it extracts the transaction partial id from the URI
 
@@ -365,17 +365,17 @@ So far, we have completed the *Try* part of the *Try*-*Cancel*/*Confirm* protoco
 public void confirm(@PathParam("txid") String txid)
 ```
 
-[15] Uses the  `CompositeTransactionManager` instance provided by the Spring container to get all the Commands "enlisted" in that  partial transaction
+[15] Uses the  `CompositeTransactionManager` instance provided by Spring container to get all the Commands "enlisted" in that  (partial) transaction
 
 [16] Asks the Spring container to return a **NEW** instance of a `DAO` with an *unsynchronized* `EntityManager` injected into it.
 
-[17] Invokes the `apply()` method on the `DAO` to translate the list of Commands to persistence operations. Because of we're applying already persisted commands, we must "disable" the JPA global entity listener. This can be easily done by ensuring no `ThreadLocal` variable with the partial id has been defined.
+[17] Invokes the `apply()` method on the `DAO` to translate Commands to persistence operations. Because of we're applying already persisted commands, we must disable the JPA global entity listener. This can be easily done by ensuring no `ThreadLocal` variable with the partial id has been defined.
 
 [18] Forces the `EntityManager` to join a `LOCAL/JTA` transaction and, thus, all persistence operations are applied to the underlying repository.
 
-[19] When a Domain Service fails to process the confirm call, a 404 response is returned. Once the TCC Service receives it, the confirmation process is stopped and a 409 response is sent back to the Coordinator who in turn propagates that value to the Composite Service.
+[19] When a Domain Service fails to process the confirm call, a 404 response is returned. When the TCC Service receives it, the confirmation process is stopped and a 409 response is sent back to the Coordinator which in turn propagates that value to the Composite Service.
 
-[20] If all confirm calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator who in turn propagates that value to the Composite Service.
+[20] If all confirm calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator which in turn propagates that value to the Composite Service.
 
 
 
@@ -385,9 +385,9 @@ And finally the *Cancel* branch:
 
 [11] If Composite Service detects some error condition, it can abort the Composite Transaction by invoking the `rollback()` method on the Coordinator  (`TccRestCoordinator`) 
 
-[12] In that case, the coordinator sends a PUT request to the cancel URI of the TCC Service, adding the Composite Transaction data as the request content
+[12] In that case, the coordinator sends a PUT request to the "cancel URI" of the TCC Service, adding the Composite Transaction data as the request content
 
-[13] The TCC Service iterates over the transaction participants list and, for each of them, sends a DELETE request to their respective TCC cancel URI (computed during the Composite Transaction creation)
+[13] The TCC Service iterates over the transaction participants list and, for each of them, sends a DELETE request to their respective "TCC cancel URI" (computed during the Composite Transaction creation)
 
 [14] When a Domain Service receives the cancel call, it extracts the transaction partial id from the URI
 
@@ -395,8 +395,8 @@ And finally the *Cancel* branch:
 public void cancel(@PathParam("txid") String txid)
 ```
 
-[15] In the current implementation the Domain Service does nothing. Perhaps a valid action could be to "close" the partial transaction (when using the Kafka-based implementation of the  `CompositeTransactionManager` that could trigger a topic removal)
+[15] In the current implementation the Domain Service does nothing. Perhaps a valid action could be to "close" the partial transaction (with the Kafka-based implementation of the  `CompositeTransactionManager` that could trigger a topic removal)
 
-[16] When a Domain Service fails to process the cancel call, a 404 response is returned. Once the TCC Service receives it, a log trace is written and the cancellation process goes on. When the last call finishes, the TCC Service returns a 204 response to the Coordinator who in turn propagates that value to the Composite Service.
+[16] When a Domain Service fails to process the cancel call, a 404 response is returned. When the TCC Service receives it, a log trace is written and the cancellation process goes on. After the last call finishes, the TCC Service returns a 204 response to the Coordinator which in turn propagates that value to the Composite Service.
 
-[17] If all cancel calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator who in turn propagates that value to the Composite Service.
+[17] If all cancel calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator which in turn propagates that value to the Composite Service.
