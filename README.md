@@ -373,7 +373,7 @@ public void confirm(@PathParam("txid") String txid)
 
 [18] Forces the `EntityManager` to join a `LOCAL/JTA` transaction and, thus, all persistence operations are applied to the underlying repository.
 
-[19] When a Domain Service fails to process the confirm call, a 404 response is returned. When the TCC Service receives it, the confirmation process is stopped and a 409 response is sent back to the Coordinator which in turn propagates that value to the Composite Service.
+[19] If a Domain Service fails to process the confirm call, a 404 response is returned. When the TCC Service receives it, the confirmation process is stopped and a 409 response is sent back to the Coordinator which in turn propagates that value to the Composite Service.
 
 [20] If all confirm calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator which in turn propagates that value to the Composite Service.
 
@@ -397,6 +397,6 @@ public void cancel(@PathParam("txid") String txid)
 
 [15] In the current implementation the Domain Service does nothing. Perhaps a valid action could be to "close" the partial transaction (with the Kafka-based implementation of the  `CompositeTransactionManager` that could trigger a topic removal)
 
-[16] When a Domain Service fails to process the cancel call, a 404 response is returned. When the TCC Service receives it, a log trace is written and the cancellation process goes on. After the last call finishes, the TCC Service returns a 204 response to the Coordinator which in turn propagates that value to the Composite Service.
+[16] If a Domain Service fails to process the cancel call, a 404 response is returned. When the TCC Service receives it, a log trace is written and the cancellation process goes on. After the last call finishes, the TCC Service returns a 204 response to the Coordinator which in turn propagates that value to the Composite Service.
 
 [17] If all cancel calls succeed (all return 204) the TCC Service also responds with a 204 to the Coordinator which in turn propagates that value to the Composite Service.
