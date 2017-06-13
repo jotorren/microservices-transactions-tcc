@@ -61,9 +61,9 @@ public class CompositeTransactionConfiguration {
 	}
 	
 	@Bean
-	public ZkUtils zkUtils() {
+	public ZkUtils zkUtils(ZkClient zkClient) {
         // Security for Kafka was added in Kafka 0.9.0.0
         boolean isSecureKafkaCluster = false;		
-		return new ZkUtils(zkClient(), new ZkConnection(zooServers), isSecureKafkaCluster);
+		return new ZkUtils(zkClient, new ZkConnection(zooServers), isSecureKafkaCluster);
 	}
 }
